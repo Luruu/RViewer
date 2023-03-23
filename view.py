@@ -2,10 +2,9 @@
     view
 '''
 
-from PySide6.QtCore import QStandardPaths, Qt, Slot, QUrl
-from PySide6.QtGui import QAction, QIcon, QKeySequence, QScreen, QPalette, QColor
-from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog,QWidget,
-    QMainWindow, QSlider, QStyle, QToolBar, QLabel, QFrame, QPushButton, QSizePolicy)
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 
 
@@ -17,7 +16,8 @@ class View():
     def __init__(self, source_path):
         self.player = PlayerView(source_path)
         self.window = WindowView(self.player.get_istance_vlc_player())
-         
+    
+    
 
 class PlayerView():
     def __init__(self, video_path):
@@ -25,13 +25,8 @@ class PlayerView():
         self.vlc_istance = vlc.Instance()
         self.vlc_player = self.vlc_istance.media_player_new()
         self.media = self.vlc_istance.media_new(video_path)
-        
-        self.vlc_player.set_media(self.media)
-
-        '''
-        self.video_info = {"duration" : self.vlc_player.get_length(), 
-                      "rate" : self.vlc_player.get_rate()}
-        '''
+        self.vlc_player.set_media(self.media)       
+        self.is_paused = False
         
     
     def get_istance_vlc_player(self):
@@ -57,18 +52,16 @@ class PlayerView():
     
     def go_back(self, ms):
         new_pos = self.get_time() - ms
+        self.set_time(new_pos if new_pos >=0 else 0)
         print("a",self.get_time())
-        if new_pos >=0:
-            self.set_time(new_pos)
 
     
     def go_forward(self, ms):
         # self.pause()
         new_pos = self.get_time() + ms 
         duration = self.get_duration()
+        self.set_time(new_pos if new_pos < duration else duration)
         print("b", new_pos, duration)
-        if new_pos < duration:
-            self.set_time(new_pos)
 
     def get_state(self):
         return self.vlc_player.get_state()
@@ -103,6 +96,9 @@ class PlayerView():
     def get_sub(self):
         return self.vlc_player.video_get_spu()
     
+    def get_sub_descriptions(self):
+        return self.vlc_player.video_get_spu_description()
+    
     def get_sub_delay(self):
         return self.vlc_player.video_get_spu_delay()
     
@@ -115,14 +111,26 @@ class PlayerView():
 
 class WindowView(QMainWindow):
     def __init__(self,player):
-        sys.argv += ['-platform', 'windows:darkmode=1']
+        f = open("CSS/loadbar_style.css", "r")
+        self.loadbar_style = f.read()
+        f.close()
+        f = open("CSS/speed_slider.css", "r")
+        self.speedslider_style = f.read() 
+
+        if sys.platform == "win32": # for Windows
+            sys.argv += ['-platform', 'windows:darkmode=1']
+        
         self.app = QApplication(sys.argv)
+
+        # ------ DA CONTROLLARE SE IL PARAMETRO ARGV[1] è UN VIDEO O MENO! (o se è stato passato)
+        
         self.app.setStyle('Fusion')
         super().__init__()
         available_geometry = self.screen().availableGeometry()
         self.resize(available_geometry.width() / 4,
                         available_geometry.height() / 3.5)
-    
+
+        
         self.setWindowTitle("RViewer")
         
         self.set_widgets()
@@ -140,6 +148,10 @@ class WindowView(QMainWindow):
         self.videoframe.setAutoFillBackground(True)
         self.setCentralWidget(self.videoframe)
 
+        self.labelposition = QLabel(self)
+        self.labelposition.setText("00:00:00")
+        self.labelposition.setAlignment(Qt.AlignCenter)
+
         self.tool_bar = QToolBar()
         self.tool_bar2 = QToolBar()
 
@@ -152,7 +164,7 @@ class WindowView(QMainWindow):
         self.btnBack = QPushButton(self)
         self.btnBack.setText("-10")        
         self.btnBack.setShortcut('Ctrl+D')
-        self.btnBack.move(100,100)
+        # self.btnBack.move(100,100)
 
         
         style = self.style()
@@ -165,56 +177,80 @@ class WindowView(QMainWindow):
         self.btnForward = QPushButton(self)
         self.btnForward.setText("+30")          #text
         self.btnForward.setShortcut('Ctrl+F')  #shortcut key
-        self.btnForward.move(100,100)
+        # self.btnForward.move(100,100)
         
         # self.tool_bar2.addSeparator()
-
-        self.loadbar = QSlider()
+        
+        self.loadbar = SliderClicker(self)
         self.loadbar.setOrientation(Qt.Horizontal)
         self.loadbar.setMinimum(0)
         self.loadbar.setMaximum(1)
         self.loadbar.setSingleStep(1)
+        self.loadbar.setStyleSheet(self.loadbar_style)  
 
-
+        
         self.speed_slider = QSlider()
         self.speed_slider.setOrientation(Qt.Horizontal)
         self.speed_slider.setMinimum(1)
         self.speed_slider.setMaximum(10)
         available_width = self.screen().availableGeometry().width()
         self.speed_slider.setFixedWidth(available_width / 10)
-        self.speed_slider.setValue(5) #default playback value of a video (5/5 = 1)
+        self.speed_slider.setValue(5) #default playback value of a video (5/5 = 1.0x)
         self.speed_slider.setTickInterval(1)
         self.speed_slider.setTickPosition(QSlider.TicksBelow)
         self.speed_slider.setToolTip("speed video")
+        self.speed_slider.setStyleSheet(self.speedslider_style)  
         
         
         self.label_speed = QLabel(self)
-        self.label_speed.setText(" 1x")
+        self.label_speed.setText(" 1.0x")
         self.label_speed.setAlignment(Qt.AlignCenter)
         
 
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.left_spacer1 = QWidget()
+        self.left_spacer1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        self.labelduration = QLabel(self)
+        self.labelduration.setText("00:00:00")
+        self.labelduration.setAlignment(Qt.AlignCenter | Qt.AlignRight)
+        
+        self.timer = QTimer(self)
+        self.timer.setInterval(500)
+
+        self.right_spacer1 = QWidget()
+        self.right_spacer1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        
+        self.right_spacer2 = QWidget()
+        self.right_spacer2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        self.label_todo = QLabel(self)
+        self.label_todo.setText("TO-DO")
+        self.label_todo.setAlignment(Qt.AlignCenter)
 
 
     def add_widgets(self, player):
+        self.tool_bar2.addWidget(self.labelposition)
         self.tool_bar2.addWidget(self.loadbar)
+        self.tool_bar2.addWidget(self.labelduration)
+
         
+        # self.tool_bar.addWidget(self.left_spacer1)
+        self.tool_bar.addWidget(self.right_spacer1)
+
         self.tool_bar.addWidget(self.btnBack)
 
         self.play_pause_action = self.tool_bar.addAction(self.icon_play, "Play/Pause")
-
         self.tool_bar.addWidget(self.btnForward)
 
-        self.tool_bar.addWidget(self.spacer)
-        
+        #self.tool_bar.addWidget(self.right_spacer1)
         self.tool_bar.addWidget(self.speed_slider)
-
-        self.tool_bar.addWidget(self.label_speed)
-
-        self.anchorVLCtoWindow(player, self.videoframe.winId())
-    
+        self.tool_bar.addWidget(self.label_speed)   
+        self.tool_bar.addWidget(self.right_spacer2)
         
+        self.tool_bar.addWidget(self.label_todo)
+        
+        self.anchorVLCtoWindow(player, self.videoframe.winId())
+     
 
     def anchorVLCtoWindow(self, player, id):
         if sys.platform.startswith('linux'): # for Linux using the X Server
@@ -225,3 +261,46 @@ class WindowView(QMainWindow):
             player.set_nsobject(id)
         else:
             print("ERROR: this software does not work with", sys.platform)
+            exit()
+
+
+class SliderClicker(QSlider):
+
+    ''' ----------------  WHY SLIDERCICKER CLASS IS USED?
+        this class is useful for handling the "mousepressEvent" event 
+        which is not normally supported by QSlider. To update the video player time, 
+        the "valueChanged" signal is used taking into account the boolean variable "self.mouse_pressed".
+    '''
+    def __init__(self, window):
+        super().__init__()
+        self.mouse_pressed = False 
+        self.window = window
+        
+
+    def mousePressEvent(self, event):
+        super(SliderClicker, self).mousePressEvent(event)
+        if event.button() == Qt.LeftButton:
+            self.mouse_pressed = True
+            val = self.pixelPosToRangeValue(event.pos())
+            self.setValue(val)
+            # Mouse_pressed will be turn false using a slot function into the controller!
+            
+
+    def pixelPosToRangeValue(self, pos):
+        opt = QStyleOptionSlider()
+        self.initStyleOption(opt)
+        gr = self.style().subControlRect(QStyle.CC_Slider, opt, QStyle.SC_SliderGroove, self)
+        sr = self.style().subControlRect(QStyle.CC_Slider, opt, QStyle.SC_SliderHandle, self)
+
+        if self.orientation() == Qt.Horizontal:
+            sliderLength = sr.width()
+            sliderMin = gr.x()
+            sliderMax = gr.right() - sliderLength + 1
+        else:
+            sliderLength = sr.height()
+            sliderMin = gr.y()
+            sliderMax = gr.bottom() - sliderLength + 1
+        pr = pos - sr.center() + sr.topLeft()
+        p = pr.x() if self.orientation() == Qt.Horizontal else pr.y()
+        return QStyle.sliderValueFromPosition(self.minimum(), self.maximum(), p - sliderMin,
+                                               sliderMax - sliderMin, opt.upsideDown)
