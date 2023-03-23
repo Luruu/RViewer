@@ -63,11 +63,13 @@ class Controller():
         self.w_player.set_rate(new_speed)
 
     def update_gui(self):
-        # print(int(self.w_player.get_time()))
         time = self.w_player.get_time()
         self.window.loadbar.setValue(int(time))
         self.window.labelposition.setText(self.m_player.convert_ms_to_hmmss(time))
-        self.window.labelduration.setText(self.m_player.convert_ms_to_hmmss(self.m_player.video_info["duration"] - time))
+        self.window.labelduration.setText(self.m_player.convert_ms_to_hmmss(self.m_player.video_info["duration"]- time))
+                                                                            
+    def timer_update_gui(self):
+        self.update_gui()
         if not self.w_player.is_playing(): # if is paused or stopped
             self.window.timer.stop()
             self.window.play_pause_action.setIcon(self.window.icon_pause)
@@ -79,18 +81,24 @@ class Controller():
         ''' This slot is only just used to handle mouse clicks.'''
         if self.window.loadbar.mouse_pressed:
             self.window.loadbar.mouse_pressed = False
-           
-            time = self.window.loadbar.value()
-            self.w_player.set_time(time)
-            self.window.labelposition.setText(self.m_player.convert_ms_to_hmmss(time))
-            self.window.labelduration.setText(self.m_player.convert_ms_to_hmmss(self.m_player.video_info["duration"]  - time))
+            self.w_player.set_time(self.window.loadbar.value())
+            self.update_gui()
             
+    def goback_and_update_gui(self):
+        self.w_player.go_back(self.m_player.ms_back)
+        self.update_gui()
+
+    def goforward_and_update_gui(self):
+        self.w_player.go_forward(self.m_player.ms_forward)
+        self.update_gui()
+    
+
     def set_view_connections(self):
-        self.window.btnBack.clicked.connect(lambda: self.w_player.go_back(self.m_player.ms_back))
+        self.window.btnBack.clicked.connect(self.goback_and_update_gui)
         self.window.play_pause_action.triggered.connect(self.play_pause)
-        self.window.btnForward.clicked.connect(lambda: self.w_player.go_forward(self.m_player.ms_forward))
+        self.window.btnForward.clicked.connect(self.goforward_and_update_gui)
         self.window.speed_slider.valueChanged.connect(self.changeSpeedVideo)
-        self.window.timer.timeout.connect(self.update_gui)
+        self.window.timer.timeout.connect(self.timer_update_gui)
 
         self.window.loadbar.sliderMoved.connect(lambda: self.w_player.set_time(self.window.loadbar.value()))
         self.window.loadbar.sliderPressed.connect(lambda: self.pause)
