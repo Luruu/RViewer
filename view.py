@@ -7,10 +7,8 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 
-
 import vlc
 import sys
-
 
 class View():
     def __init__(self, source_path):
@@ -18,7 +16,6 @@ class View():
         self.window = WindowView(self.player.get_istance_vlc_player())
     
     
-
 class PlayerView():
     def __init__(self, video_path):
         self.video_path = video_path
@@ -27,7 +24,13 @@ class PlayerView():
         self.media = self.vlc_istance.media_new(video_path)
         self.vlc_player.set_media(self.media)       
         self.is_paused = False
-        
+    
+    def get_media(self):
+        return self.media
+
+    def get_video_property(self, e_meta):
+        return self.media.get_meta(e_meta)
+
     
     def get_istance_vlc_player(self):
         return self.vlc_player
@@ -131,7 +134,7 @@ class WindowView(QMainWindow):
                         available_geometry.height() / 3.5)
 
         
-        self.setWindowTitle("RViewer")
+        self.setWindowTitle("RV")
         
         self.set_widgets()
 

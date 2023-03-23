@@ -5,6 +5,7 @@
 from view import View
 from model import Model
 import sys
+import vlc
 
 class Controller():
     def __init__(self):
@@ -26,16 +27,24 @@ class Controller():
         self.play_pause()
         self.window.timer.start()
         self.w_player.parse_media()
-
+        
         self.window.show() 
-        self.m_player.video_info["duration"] = self.w_player.get_duration()
-        self.window.loadbar.setMaximum(self.m_player.video_info["duration"])
-        self.m_player.video_info["rate"] = self.w_player.get_rate()
 
-        # print(type(self.w_player.vlc_player.get_full_title_descriptions()))
-        print("[test] n_subtitles:", self.w_player.get_sub_count())
-        print("[test] get_subtitles:", self.w_player.get_sub())
-        print("[test] get_sub_descriptions:", self.w_player.get_sub_descriptions())
+        # saving video informations
+        for key, value in vlc.Meta._enum_names_.items():
+            self.m_player.video_info[value] = self.w_player.get_video_property(vlc.Meta(key))
+        self.m_player.video_info["Subs"] = { "Count": self.w_player.get_sub_count(),
+                                            "available" : self.w_player.get_sub(),
+                                            "descriptions": self.w_player.get_sub_descriptions()}
+        self.m_player.video_info["Rate"] = self.w_player.get_rate()
+        self.m_player.video_info["Duration"] = self.w_player.get_duration()
+        self.m_player.video_info["Duration_ss"] = self.w_player.get_duration() / 1000
+        self.m_player.video_info["Duration_hh_mm_ss"] = self.m_player.convert_ms_to_hmmss(self.w_player.get_duration())
+        
+        print("video informations:", self.m_player.video_info)
+        new_title = "RV - {} [{}]".format(self.m_player.video_info['Title'],self.m_player.video_info["Duration_hh_mm_ss"])
+        self.window.setWindowTitle(new_title)
+        self.window.loadbar.setMaximum(self.m_player.video_info["Duration"])
         
         
         sys.exit(self.window.app.exec())
@@ -66,7 +75,7 @@ class Controller():
         time = self.w_player.get_time()
         self.window.loadbar.setValue(int(time))
         self.window.labelposition.setText(self.m_player.convert_ms_to_hmmss(time))
-        self.window.labelduration.setText(self.m_player.convert_ms_to_hmmss(self.m_player.video_info["duration"]- time))
+        self.window.labelduration.setText(self.m_player.convert_ms_to_hmmss(self.m_player.video_info["Duration"]- time))
                                                                             
     def timer_update_gui(self):
         self.update_gui()
@@ -105,7 +114,6 @@ class Controller():
         self.window.loadbar.sliderReleased.connect(lambda: self.play)
         self.window.loadbar.valueChanged.connect(self.slider_clicked)
       
-
         
 if __name__ == '__main__':
     c = Controller()
