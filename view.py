@@ -11,14 +11,15 @@ import sys
 
     
 class PlayerView():
-    def __init__(self, video_path):
-        self.video_path = video_path
+
+    def __init__(self):
+        self.video_path = sys.argv[1]
         self.vlc_istance = vlc.Instance("--verbose -1")
         self.vlc_player = self.vlc_istance.media_player_new()
-        self.media = self.vlc_istance.media_new(video_path)
+        self.media = self.vlc_istance.media_new(sys.argv[1])
         self.vlc_player.set_media(self.media)       
         self.is_paused = False
-    
+        
     
     def get_media(self):
         return self.media

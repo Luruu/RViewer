@@ -5,8 +5,13 @@
 from view import PlayerView, WindowView
 from model import PlayerModel, VideoModel
 import sys
+import time
+from PySide6.QtCore import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
 
 class Controller():
+
     def __init__(self):
         self.program_name = "RV"
         # source_path is for testing only
@@ -15,11 +20,16 @@ class Controller():
         # source_path = "test/B.mp3"
 
         sys.argv += [source_path]
-        self.w_player = PlayerView(sys.argv[1])
+
         
+        self.w_player = PlayerView()
         self.m_player = PlayerModel()
         self.window = WindowView(self.program_name, self, self.m_player.player_preferences)
         self.anchorVLCtoWindow(self.w_player.get_istance_vlc_player(), self.window.videoframe.winId())
+        
+        
+        self.mutex = QMutex(1)
+        self.do_lock = False
 
         self.play_pause()
         self.m_video = VideoModel()
@@ -30,8 +40,11 @@ class Controller():
         self.window.show() 
         self.m_video.get_videoinfo_byvideo(self.w_player)
         self.initialize_gui()
+        
+        
+        self.thread = self.ThreadTimer(self)
+        self.thread.start()
 
-       
         sys.exit(self.window.app.exec())
     
 
@@ -39,13 +52,13 @@ class Controller():
         self.w_player.play()
         self.w_player.is_paused = False
         self.window.play_pause_action.setIcon(self.window.icon_pause)
-        self.window.timer.start()
+        self.mutex.unlock()
         
     def pause(self):
         self.w_player.pause()
         self.w_player.is_paused = True
         self.window.play_pause_action.setIcon(self.window.icon_play)
-        self.window.timer.stop()
+        self.do_lock = True # ThreadTimer has to wait
 
     def play_pause(self):
         self.pause() if self.w_player.is_playing() else self.play()
@@ -70,14 +83,6 @@ class Controller():
         self.window.loadbar.setValue(int(self.m_video.video_info["Position"]))
         self.window.labelposition.setText(self.m_video.convert_ms_to_hmmss(self.m_video.video_info["Position"]))
         self.window.labelduration.setText(self.m_video.convert_ms_to_hmmss(self.m_video.video_info["Duration"] - self.m_video.video_info["Position"]))
-                                                                            
-    def timer_update_gui(self):
-        self.update_gui()
-        if not self.w_player.is_playing(): # if is paused or stopped
-            self.window.timer.stop()
-            self.window.play_pause_action.setIcon(self.window.icon_play)
-            if not self.w_player.is_paused: #if is stopped
-                self.w_player.stop()
 
 
     ''' This slot is only just used to handle mouse clicks.'''
@@ -104,11 +109,10 @@ class Controller():
         self.window.btnpreferences.clicked.connect(self.window.show_preference_window)
 
         self.window.speed_slider.valueChanged.connect(self.changeSpeedVideo)
-        self.window.timer.timeout.connect(self.timer_update_gui)
 
         self.window.loadbar.sliderMoved.connect(lambda: self.w_player.set_time(self.window.loadbar.value()))
-        self.window.loadbar.sliderPressed.connect(lambda: self.pause)
-        self.window.loadbar.sliderReleased.connect(lambda: self.play)
+        self.window.loadbar.sliderPressed.connect(self.pause)
+        self.window.loadbar.sliderReleased.connect(self.play)
         self.window.loadbar.valueChanged.connect(self.slider_clicked)
         self.window.tool_bar2.orientationChanged.connect(self.window.set_loadbar2orientation)
 
@@ -124,7 +128,31 @@ class Controller():
             exit()
     
     def close_program(self, event, track_pos,load_pos):
+        self.thread.terminate()
         self.m_video.save_video_preferences(track_pos=track_pos, load_pos=load_pos, vol= self.w_player.get_volume())
         
+# to avoid freezes, I use this QThread as a timer
+    class ThreadTimer(QThread):
+        
+        def __init__(self,controller):
+            QThread.__init__(self)
+            self.controller = controller
+        
+        def run(self):
+            while not self.isInterruptionRequested():
+                if self.controller.do_lock:
+                    print("LOCK")
+                    self.controller.mutex.lock()
+                    self.controller.do_lock = False
+                time.sleep(0.5)
+                self.controller.update_gui()
+                if not self.controller.w_player.is_playing(): # if is paused or stopped
+                    self.controller.window.play_pause_action.setIcon(self.controller.window.icon_play)
+                    if not self.controller.w_player.is_paused: #if is stopped
+                        self.controller.w_player.stop()
+                
+            
+            
+
 if __name__ == '__main__':
     c = Controller()
