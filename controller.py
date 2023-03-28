@@ -2,63 +2,48 @@
     controller
 '''
 
-from view import View
-from model import Model
+from view import PlayerView, WindowView
+from model import PlayerModel, VideoModel
 import sys
-import vlc
 
 class Controller():
     def __init__(self):
-        
+        self.program_name = "RV"
         # source_path is for testing only
         source_path = "test/test_sub.mkv"
+        #source_path = "test/input.mkv"
+        # source_path = "test/B.mp3"
+
         sys.argv += [source_path]
+        self.w_player = PlayerView(sys.argv[1])
+        
+        self.m_player = PlayerModel()
+        self.window = WindowView(self.program_name, self, self.m_player.player_preferences)
+        self.anchorVLCtoWindow(self.w_player.get_istance_vlc_player(), self.window.videoframe.winId())
 
-        view = View(sys.argv[1])
-        model = Model(back=10,forward=30)
-
-        self.window = view.window
-        self.w_player = view.player
-
-        self.m_player = model.player
+        self.play_pause()
+        self.m_video = VideoModel()
+        
 
         self.set_view_connections()
-        
-        self.play_pause()
-        self.window.timer.start()
         self.w_player.parse_media()
-        
         self.window.show() 
+        self.m_video.get_videoinfo_byvideo(self.w_player)
+        self.initialize_gui()
 
-        # saving video informations
-        for key, value in vlc.Meta._enum_names_.items():
-            self.m_player.video_info[value] = self.w_player.get_video_property(vlc.Meta(key))
-        self.m_player.video_info["Subs"] = { "Count": self.w_player.get_sub_count(),
-                                            "available" : self.w_player.get_sub(),
-                                            "descriptions": self.w_player.get_sub_descriptions()}
-        self.m_player.video_info["Rate"] = self.w_player.get_rate()
-        self.m_player.video_info["Duration"] = self.w_player.get_duration()
-        self.m_player.video_info["Duration_ss"] = self.w_player.get_duration() / 1000
-        self.m_player.video_info["Duration_hh_mm_ss"] = self.m_player.convert_ms_to_hmmss(self.w_player.get_duration())
-        
-        print("video informations:", self.m_player.video_info)
-        new_title = "RV - {} [{}]".format(self.m_player.video_info['Title'],self.m_player.video_info["Duration_hh_mm_ss"])
-        self.window.setWindowTitle(new_title)
-        self.window.loadbar.setMaximum(self.m_player.video_info["Duration"])
-        
-        
+       
         sys.exit(self.window.app.exec())
     
 
     def play(self):
         self.w_player.play()
-        self.w_player.is_paused = True
+        self.w_player.is_paused = False
         self.window.play_pause_action.setIcon(self.window.icon_pause)
         self.window.timer.start()
         
     def pause(self):
         self.w_player.pause()
-        self.w_player.is_paused = False
+        self.w_player.is_paused = True
         self.window.play_pause_action.setIcon(self.window.icon_play)
         self.window.timer.stop()
 
@@ -71,41 +56,53 @@ class Controller():
         self.window.label_speed.setText(" " + str(new_speed) + "x")
         self.w_player.set_rate(new_speed)
 
+
+    def initialize_gui(self): 
+        self.m_video.load_videopreferences()
+        self.window.speed_slider.setValue(self.m_video.video_preferences["track_value"])     
+        self.w_player.set_time(self.m_video.video_preferences["load_pos"])
+
     def update_gui(self):
-        time = self.w_player.get_time()
-        self.window.loadbar.setValue(int(time))
-        self.window.labelposition.setText(self.m_player.convert_ms_to_hmmss(time))
-        self.window.labelduration.setText(self.m_player.convert_ms_to_hmmss(self.m_player.video_info["Duration"]- time))
+        new_title = "{} - {} [{}]".format(self.program_name, self.m_video.video_info['Title'], self.m_video.video_info["Duration_hh_mm_ss"])
+        self.window.setWindowTitle(new_title)
+        self.window.loadbar.setMaximum(self.m_video.video_info["Duration"])
+        self.m_video.video_info["Position"] = self.w_player.get_time()
+        self.window.loadbar.setValue(int(self.m_video.video_info["Position"]))
+        self.window.labelposition.setText(self.m_video.convert_ms_to_hmmss(self.m_video.video_info["Position"]))
+        self.window.labelduration.setText(self.m_video.convert_ms_to_hmmss(self.m_video.video_info["Duration"] - self.m_video.video_info["Position"]))
                                                                             
     def timer_update_gui(self):
         self.update_gui()
         if not self.w_player.is_playing(): # if is paused or stopped
             self.window.timer.stop()
-            self.window.play_pause_action.setIcon(self.window.icon_pause)
+            self.window.play_pause_action.setIcon(self.window.icon_play)
             if not self.w_player.is_paused: #if is stopped
                 self.w_player.stop()
 
 
+    ''' This slot is only just used to handle mouse clicks.'''
     def slider_clicked(self):
-        ''' This slot is only just used to handle mouse clicks.'''
         if self.window.loadbar.mouse_pressed:
             self.window.loadbar.mouse_pressed = False
             self.w_player.set_time(self.window.loadbar.value())
             self.update_gui()
             
     def goback_and_update_gui(self):
-        self.w_player.go_back(self.m_player.ms_back)
+        self.w_player.go_back(self.m_video.convert_seconds_to_ms(self.m_player.player_preferences["back_value"])) 
         self.update_gui()
 
     def goforward_and_update_gui(self):
-        self.w_player.go_forward(self.m_player.ms_forward)
+        self.w_player.go_forward(self.m_video.convert_seconds_to_ms(self.m_player.player_preferences["forward_value"])) 
         self.update_gui()
     
+
 
     def set_view_connections(self):
         self.window.btnBack.clicked.connect(self.goback_and_update_gui)
         self.window.play_pause_action.triggered.connect(self.play_pause)
         self.window.btnForward.clicked.connect(self.goforward_and_update_gui)
+        self.window.btnpreferences.clicked.connect(self.window.show_preference_window)
+
         self.window.speed_slider.valueChanged.connect(self.changeSpeedVideo)
         self.window.timer.timeout.connect(self.timer_update_gui)
 
@@ -113,7 +110,21 @@ class Controller():
         self.window.loadbar.sliderPressed.connect(lambda: self.pause)
         self.window.loadbar.sliderReleased.connect(lambda: self.play)
         self.window.loadbar.valueChanged.connect(self.slider_clicked)
-      
+        self.window.tool_bar2.orientationChanged.connect(self.window.set_loadbar2orientation)
+
+    def anchorVLCtoWindow(self, player, id):
+        if sys.platform.startswith('linux'): # for Linux using the X Server
+            player.set_xwindow(id)
+        elif sys.platform == "win32": # for Windows
+            player.set_hwnd(id)
+        elif sys.platform == "darwin": # for MacOS
+            player.set_nsobject(id)
+        else:
+            print("ERROR: this software does not work with", sys.platform)
+            exit()
+    
+    def close_program(self, event, track_pos,load_pos):
+        self.m_video.save_video_preferences(track_pos=track_pos, load_pos=load_pos, vol= self.w_player.get_volume())
         
 if __name__ == '__main__':
     c = Controller()
