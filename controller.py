@@ -50,7 +50,8 @@ class Controller():
     def play(self):
         self.w_player.play()
         self.w_player.is_paused = False
-        self.window.play_pause_action.setIcon(self.window.icon_pause)
+        self.window.btnPlayPause.setText("||")
+        self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: #981c12; color: white;}')
         if self.sem.available() == 0:
             self.sem.release(2)
             
@@ -58,7 +59,8 @@ class Controller():
     def pause(self):
         self.w_player.pause()
         self.w_player.is_paused = True
-        self.window.play_pause_action.setIcon(self.window.icon_play)
+        self.window.btnPlayPause.setText(">")
+        self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: green; color: white;}')
         self.sem.acquire(1)
 
     def play_pause(self):
@@ -106,7 +108,7 @@ class Controller():
 
     def set_view_connections(self):
         self.window.btnBack.clicked.connect(self.goback_and_update_gui)
-        self.window.play_pause_action.triggered.connect(self.play_pause)
+        self.window.btnPlayPause.clicked.connect(self.play_pause)
         self.window.btnForward.clicked.connect(self.goforward_and_update_gui)
         self.window.btnpreferences.clicked.connect(self.window.show_preference_window)
 
@@ -150,7 +152,8 @@ class Controller():
                 time.sleep(0.5)
                 self.update_gui.emit()
                 if not self.controller.w_player.is_playing(): # if is paused or stopped
-                    self.controller.window.play_pause_action.setIcon(self.controller.window.icon_play)
+                    self.controller.window.btnPlayPause.setText(">")
+                    self.controller.window.btnPlayPause.setStyleSheet('QPushButton {background-color: green; color: white;}') 
                     if not self.controller.w_player.is_paused: # if is stopped
                         self.controller.w_player.stop()
                         if self.controller.m_player.player_preferences["loop_video"]:

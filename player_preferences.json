@@ -1,1 +1,1 @@
-{"back_value": 10, "forward_value": 30, "track_value": 5, "loop_video": false, "pick_up_where_you_left_off": true, "save_track_value_on_close": true, "show_subtitle_if_available": true, "x": 433, "y": 293, "dim": 753, "hei": 517}
+{"back_value": 10, "forward_value": 30, "track_value": 5, "loop_video": true, "pick_up_where_you_left_off": true, "save_track_value_on_close": true, "show_subtitle_if_available": true, "x": 917, "y": 228, "dim": 753, "hei": 625}

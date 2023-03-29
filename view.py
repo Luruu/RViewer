@@ -305,22 +305,25 @@ class WindowView(QMainWindow):
         self.addToolBar(Qt.TopToolBarArea, self.tool_bar3)
         
         self.btnBack = QPushButton(self)
+        self.btnBack.setStyleSheet('QPushButton {background-color: silver; color: black;}')
         self.btnBack.setText("-{}".format(player_user_preferences["back_value"]))
         self.btnBack.setShortcut('Ctrl+D')
 
         
 
         
-        style = self.style()
-        self.icon_play = QIcon.fromTheme("media-playback-start.png",
-                             style.standardIcon(QStyle.SP_MediaPlay))
-        self.icon_pause = QIcon.fromTheme("media-playback-pause.png",
-                               style.standardIcon(QStyle.SP_MediaPause))
+        self.btnPlayPause = QPushButton(self)
+        self.btnPlayPause.setStyleSheet('QPushButton {background-color: green; color: white;}')
+        self.btnPlayPause.setFixedSize(105,30)  
+        
+        self.btnPlayPause.setText("||")   
+        self.btnPlayPause.setShortcut('Ctrl+F')  
         
 
         self.btnForward = QPushButton(self)
+        self.btnForward.setStyleSheet('QPushButton {background-color: silver; color: black;}')
         self.btnForward.setText("+{}".format(player_user_preferences["forward_value"]))   
-        self.btnForward.setShortcut('Ctrl+F')  
+        self.btnForward.setShortcut('Ctrl+G')  
         
         
         
@@ -394,7 +397,7 @@ class WindowView(QMainWindow):
 
         self.tool_bar.addWidget(self.spacer1)
         self.tool_bar.addWidget(self.btnBack)
-        self.play_pause_action = self.tool_bar.addAction(self.icon_play, "")
+        self.tool_bar.addWidget(self.btnPlayPause)
         self.tool_bar.addWidget(self.btnForward)
         self.tool_bar.addWidget(self.spacer2)
 
