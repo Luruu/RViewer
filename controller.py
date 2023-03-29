@@ -28,11 +28,9 @@ class Controller():
         self.anchorVLCtoWindow(self.w_player.get_istance_vlc_player(), self.window.videoframe.winId())
         
         
-        self.mutex = QMutex(1)
-        self.do_lock = False
-
+        self.sem = QSemaphore(1)
         self.play_pause()
-        self.m_video = VideoModel()
+        self.m_video = VideoModel(self.m_player.player_preferences)
         
 
         self.set_view_connections()
@@ -43,8 +41,9 @@ class Controller():
         
         
         self.thread = self.ThreadTimer(self)
+        self.thread.update_gui.connect(self.update_gui)
         self.thread.start()
-
+        
         sys.exit(self.window.app.exec())
     
 
@@ -52,13 +51,15 @@ class Controller():
         self.w_player.play()
         self.w_player.is_paused = False
         self.window.play_pause_action.setIcon(self.window.icon_pause)
-        self.mutex.unlock()
+        if self.sem.available() == 0:
+            self.sem.release(2)
+            
         
     def pause(self):
         self.w_player.pause()
         self.w_player.is_paused = True
         self.window.play_pause_action.setIcon(self.window.icon_play)
-        self.do_lock = True # ThreadTimer has to wait
+        self.sem.acquire(1)
 
     def play_pause(self):
         self.pause() if self.w_player.is_playing() else self.play()
@@ -72,7 +73,8 @@ class Controller():
 
     def initialize_gui(self): 
         self.m_video.load_videopreferences()
-        self.window.speed_slider.setValue(self.m_video.video_preferences["track_value"])     
+        self.window.speed_slider.setValue(self.m_video.video_preferences["track_value"])  
+        self.changeSpeedVideo()
         self.w_player.set_time(self.m_video.video_preferences["load_pos"])
 
     def update_gui(self):
@@ -130,29 +132,32 @@ class Controller():
     def close_program(self, event, track_pos,load_pos):
         self.thread.terminate()
         self.m_video.save_video_preferences(track_pos=track_pos, load_pos=load_pos, vol= self.w_player.get_volume())
-        
-# to avoid freezes, I use this QThread as a timer
+        geometry = self.window.geometry()
+        self.m_player.save_player_preferences(x=geometry.x(), y=geometry.y(), dim=geometry.width(), hei=geometry.height())
+
+
+    # to avoid freezes, I use this QThread as a timer
     class ThreadTimer(QThread):
-        
+        update_gui = Signal()
         def __init__(self,controller):
             QThread.__init__(self)
             self.controller = controller
         
         def run(self):
             while not self.isInterruptionRequested():
-                if self.controller.do_lock:
-                    print("LOCK")
-                    self.controller.mutex.lock()
-                    self.controller.do_lock = False
+                if self.controller.sem.available() == 0:
+                    self.controller.sem.acquire(1)
                 time.sleep(0.5)
-                self.controller.update_gui()
+                self.update_gui.emit()
                 if not self.controller.w_player.is_playing(): # if is paused or stopped
                     self.controller.window.play_pause_action.setIcon(self.controller.window.icon_play)
-                    if not self.controller.w_player.is_paused: #if is stopped
+                    if not self.controller.w_player.is_paused: # if is stopped
                         self.controller.w_player.stop()
+                        if self.controller.m_player.player_preferences["loop_video"]:
+                            self.controller.play()
+                        else:
+                            self.controller.sem.acquire(1)
                 
             
-            
-
 if __name__ == '__main__':
     c = Controller()

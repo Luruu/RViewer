@@ -107,45 +107,128 @@ class PlayerView():
 
 
 class PreferencesView(QDialog):
-    def __init__(self,name_program):
+    def __init__(self, controller):
         super(PreferencesView, self).__init__()
-        available_geometry = self.screen().availableGeometry()
-        self.resize(available_geometry.width() / 6,
-                        available_geometry.height() / 3)
-        
-        self.setWindowTitle(name_program + " preferences")
+        self.controller = controller
+        self.player_preferences = self.controller.m_player.player_preferences
+        self.nameprogram = self.controller.program_name
+        self.setWindowTitle(self.nameprogram + " preferences")
         
         self.set_widgets()
         self.add_widgets()
+        self.track_bar_conversion = 5
 
+    def showEvent(self, event):
+        self.spinbox1.setValue(int(self.player_preferences["back_value"]))
+        self.spinbox2.setValue(int(self.player_preferences["forward_value"]))
+        self.spinbox3.setValue(float(self.player_preferences["track_value"] / self.track_bar_conversion))
+        self.checkbox1.setChecked(self.player_preferences["loop_video"])
+        self.checkbox2.setChecked(self.player_preferences["pick_up_where_you_left_off"])
+        self.checkbox3.setChecked(self.player_preferences["save_track_value_on_close"])
+        self.checkbox4.setChecked(self.player_preferences["show_subtitle_if_available"])
+        
+
+    def unsaved_changes(self):
+        back_changed = self.player_preferences["back_value"] != self.spinbox1.value()
+        forward_changed = self.player_preferences["forward_value"] != self.spinbox2.value()
+        track_changed = self.player_preferences["track_value"] != int(self.spinbox3.value() * self.track_bar_conversion)
+        loop_changed = self.player_preferences["loop_video"] != self.checkbox1.isChecked()
+        pick_changed = self.player_preferences["pick_up_where_you_left_off"] != self.checkbox2.isChecked()
+        save_changed = self.player_preferences["save_track_value_on_close"] != self.checkbox3.isChecked()
+        show_changed = self.player_preferences["show_subtitle_if_available"] != self.checkbox4.isChecked()
+
+        return back_changed or forward_changed or track_changed or loop_changed or pick_changed or save_changed or show_changed
+    
+    def changes_applied(self):
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle(self.nameprogram + " changes applied.")
+        dlg.setText("Changes applied. please reopen the video player.")
+        dlg.setStandardButtons(QMessageBox.Ok)
+        dlg.setIcon(QMessageBox.Information)
+        button = dlg.exec_()
+    
     def accept(self):
-        super.accept()
+        if self.unsaved_changes():
+            track_bar_conversion = 5
+            self.controller.m_player.save_player_preferences(back=self.spinbox1.value(),forward=self.spinbox2.value(),track_pos=int(self.spinbox3.value() * track_bar_conversion),
+                                                         loop=self.checkbox1.isChecked(),pick=self.checkbox2.isChecked(),
+                                                         save=self.checkbox3.isChecked(),show=self.checkbox4.isChecked())
+            self.changes_applied()
+        super().accept()
+        
+    
+    def reject(self):
+        if self.unsaved_changes():
+            dlg = QMessageBox(self)
+            dlg.setWindowTitle(self.nameprogram + " unsaved changes")
+            dlg.setText("There are values that have not been saved. Do you want to save the changes?")
+            dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            dlg.setIcon(QMessageBox.Question)
+            button = dlg.exec_()
+            if button == QMessageBox.Yes:
+                self.accept()
+        
+        super().reject()
+        
 
+    def restore(self):
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle(self.nameprogram + " restore default values")
+        dlg.setText("Are you sure to restore default values?")
+        dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        dlg.setIcon(QMessageBox.Question)
+        button = dlg.exec_()
+        if button == QMessageBox.Yes:
+            self.controller.m_player.player_preferences = self.controller.m_player.default_player_preferences 
+            self.close()
 
     def set_widgets(self):
         self.layoutt = QFormLayout()
 
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+    
+        self.restorebutton = QPushButton()
+        self.restorebutton.setText("Restore")
+        self.restorebutton.setStyleSheet('QPushButton {background-color: red}')
+        self.restorebutton.clicked.connect(self.restore)
 
-        button_box.accepted.connect(self.accept)
-        button_box.rejected.connect(self.reject)
+        self.spinbox1 = QSpinBox()
+        self.spinbox1.setMinimum(1)
+        
+        self.spinbox2 = QSpinBox()
+        self.spinbox2.setMinimum(1)
+        
+        self.spinbox3 = QDoubleSpinBox()
+        self.spinbox3.setMaximum(2)
+        self.spinbox3.setMinimum(0.2)
+        self.spinbox3.setSingleStep(0.2)
+        self.spinbox3.setDecimals(1)
+        
+        self.spinbox3.lineEdit().setReadOnly(True) # edit disabled but arrows enabled
 
-        self.labelback = QLabel(self)
-        self.labeltextEdit = QTextEdit()
-        self.labeltextEdit2 = QTextEdit()
-        self.labelback.setText("back value:")
-        # self.labelback.setAlignment(Qt.AlignCenter)
-
-        self.btnapply = QPushButton(self)
-        self.btnapply.setText("Apply")
+        self.checkbox1 = QCheckBox("loop video")
+        self.checkbox2 = QCheckBox("pick up where you left off")
+        self.checkbox3 = QCheckBox("save speed value on close")
+        self.checkbox4 = QCheckBox("show subtitle if available")
+        
     
     def add_widgets(self):
-        self.layoutt.addRow(QLabel("Line 1:"), QLineEdit())
-        self.layoutt.addRow(QLabel("Line 2, long text:"), QComboBox())
-        self.layoutt.addRow(QLabel("Line 3:"), QSpinBox())
+        self.layoutt.setSpacing(10)
+        self.layoutt.addRow(self.restorebutton)
+        self.layoutt.addRow(QLabel("back value:"), self.spinbox1)
+        self.layoutt.addRow(QLabel("forward value:"), self.spinbox2)
+        self.layoutt.addRow(QLabel("default speed value:"), self.spinbox3)
+        self.layoutt.addRow(QLabel("The default speed value is used for")) 
+        self.layoutt.addRow(QLabel("videos that you have never played.\n"))
+        self.layoutt.addRow(self.checkbox1)
+        self.layoutt.addRow(self.checkbox2)
+        self.layoutt.addRow(self.checkbox3)
+        self.layoutt.addRow(self.checkbox4)
+        self.layoutt.addRow(self.button_box)
         
         self.setLayout(self.layoutt)
-        print("2")
 
 
 
@@ -166,16 +249,24 @@ class WindowView(QMainWindow):
         if sys.platform == "win32": # for Windows
             sys.argv += ['-platform', 'windows:darkmode=1']
         
+        
         self.app = QApplication(sys.argv)
-
+        self.app.setApplicationName(name_program)
+        print(self.app.style())
+        self.app.setApplicationVersion("1.0")
         # ------ TO-DO: CHECK HERE IF ARGV[1] IS A PATH OF A VIDEO
         
         self.app.setStyle('Fusion')
         super().__init__()
-        self.preference_window = PreferencesView(name_program)
+        self.preference_window = PreferencesView(controller=self.controller)
         available_geometry = self.screen().availableGeometry()
-        self.resize(available_geometry.width() / 3,
+
+        if player_user_preferences["x"] == 0:
+            self.resize(available_geometry.width() / 3,
                         available_geometry.height() / 2.5)
+        else:
+            self.setGeometry(player_user_preferences["x"], player_user_preferences["y"], player_user_preferences["dim"], player_user_preferences["hei"])
+            
         
         self.setWindowTitle(name_program)
         
@@ -257,7 +348,6 @@ class WindowView(QMainWindow):
         
         self.label_speed = QLabel(self)
         
-        self.label_speed.setText(player_user_preferences["label_track_value"])
         self.label_speed.setAlignment(Qt.AlignCenter)
     
         self.labelduration = QLabel(self)
@@ -327,7 +417,6 @@ class WindowView(QMainWindow):
         else:
             self.loadbar.setOrientation(Qt.Horizontal)
     def closeEvent(self, event):
-        print(self.speed_slider.value(),self.loadbar.value())
         self.controller.close_program(event, track_pos=self.speed_slider.value(), load_pos=self.loadbar.value())
 
 

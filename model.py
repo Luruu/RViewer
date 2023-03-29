@@ -9,9 +9,9 @@ import os.path
 
 
 class VideoModel():
-    def __init__(self):
+    def __init__(self, player_preferences):
         self.default_video_preferences = {
-            "track_value" : 5,
+            "track_value" : player_preferences["track_value"],
             "load_pos": 0,
             "selected_sub_title": 1, # I have to change this value when I know if it is a number or an object.
             "volume_value" : 100 # I have to change this value when I know range.
@@ -95,15 +95,17 @@ class VideoModel():
 class PlayerModel():
     def __init__(self):
         self.default_player_preferences = {
-            "back_value" : -10,
-            "forward_value" : +30,
+            "back_value" : 10,
+            "forward_value" : 30,
             "track_value": 5,
-            "label_track_value": " 1.0x",
-            "play_at_start": True,
             "loop_video": True,
             "pick_up_where_you_left_off": True,
             "save_track_value_on_close" : True,
-            "show_subtitle_if_available" : True
+            "show_subtitle_if_available" : True,
+            "x" : 0,
+            "y": 0,
+            "dim": 0,
+            "hei": 0
         }
 
         self.player_preferences = {}
@@ -116,17 +118,13 @@ class PlayerModel():
         with open(self.file_player_preferences, 'r') as f: 
             self.player_preferences = json.load(f) #update player preferences values with player_preferences.json 
         
-    def save_player_preferences(self,play=None,back=None,forward=None,track_pos=None,load_pos=None,loop=None,pick=None,save=None,show=None):
-        if play is not None:
-            self.player_preferences["play_at_start"] = play
+    def save_player_preferences(self,back=None,forward=None,track_pos=None,loop=None,pick=None,save=None,show=None,x=None,y=None,dim=None,hei=None):
         if back is not None:
             self.player_preferences["back_value"] = back
         if forward is not None:
             self.player_preferences["forward_value"] = forward
         if track_pos is not None:
             self.player_preferences["track_value"] = track_pos
-        if load_pos is not None:
-            self.player_preferences["load_position"] = load_pos
         if loop is not None:
             self.player_preferences["loop_video"] = loop
         if pick is not None:
@@ -135,10 +133,19 @@ class PlayerModel():
             self.player_preferences["save_track_value_on_close"] = save
         if show is not None:
             self.player_preferences["show_subtitle_if_available"] = show
+        if x is not None:
+            self.player_preferences["x"] = x
+        if y is not None:
+            self.player_preferences["y"] = y
+        if dim is not None:
+            self.player_preferences["dim"] = dim
+        if hei is not None:
+            self.player_preferences["hei"] = hei
 
+        # note: all key-values are salved into file. i.e: if back is None, self.player_preferences["back_value"] value is saved into file! If it is not none, back value instead is saved into file!
         self.save_preferences_in_file(self.file_player_preferences, self.player_preferences)
 
     
     def save_preferences_in_file(self, filename, dict):
-        with open(filename, 'w', encoding='utf-8') as f:
+        with open(filename, 'w') as f:
             json.dump(dict, f)
