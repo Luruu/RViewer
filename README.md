@@ -1,6 +1,6 @@
 # RViewer
 
-# possible updates in the future
+### possible updates in the future
 1. handle playlists
 2. handle youtube videos
 3. Generate audio transcript of the subtitles
