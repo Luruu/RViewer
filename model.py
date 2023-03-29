@@ -102,6 +102,9 @@ class PlayerModel():
             "pick_up_where_you_left_off": True,
             "save_track_value_on_close" : True,
             "show_subtitle_if_available" : True,
+            "back_shortkey" : "Ctrl+D",
+            "playpause_shortkey" : "Ctrl+F",
+            "forward_shortkey" : "Ctrl+G",
             "x" : 0,
             "y": 0,
             "dim": 0,
@@ -118,7 +121,7 @@ class PlayerModel():
         with open(self.file_player_preferences, 'r') as f: 
             self.player_preferences = json.load(f) #update player preferences values with player_preferences.json 
         
-    def save_player_preferences(self,back=None,forward=None,track_pos=None,loop=None,pick=None,save=None,show=None,x=None,y=None,dim=None,hei=None):
+    def save_player_preferences(self,back=None,forward=None,track_pos=None,loop=None,pick=None,save=None,show=None,x=None,y=None,dim=None,hei=None, back_short=None, plpau_short=None, forwd_short=None):
         if back is not None:
             self.player_preferences["back_value"] = back
         if forward is not None:
@@ -141,6 +144,13 @@ class PlayerModel():
             self.player_preferences["dim"] = dim
         if hei is not None:
             self.player_preferences["hei"] = hei
+
+        if back_short is not None:
+            self.player_preferences["back_shortkey"] = back_short
+        if plpau_short is not None:
+            self.player_preferences["playpause_shortkey"] = plpau_short
+        if forwd_short is not None:
+            self.player_preferences["forward_shortkey"] = forwd_short
 
         # note: all key-values are salved into file. i.e: if back is None, self.player_preferences["back_value"] value is saved into file! If it is not none, back value instead is saved into file!
         self.save_preferences_in_file(self.file_player_preferences, self.player_preferences)

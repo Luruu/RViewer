@@ -120,8 +120,12 @@ class PreferencesView(QDialog):
 
     def showEvent(self, event):
         self.spinbox1.setValue(int(self.player_preferences["back_value"]))
+        self.text1.setText(self.player_preferences["back_shortkey"])
         self.spinbox2.setValue(int(self.player_preferences["forward_value"]))
+        self.text2.setText(self.player_preferences["forward_shortkey"])
+        self.text3.setText(self.player_preferences["playpause_shortkey"])
         self.spinbox3.setValue(float(self.player_preferences["track_value"] / self.track_bar_conversion))
+        
         self.checkbox1.setChecked(self.player_preferences["loop_video"])
         self.checkbox2.setChecked(self.player_preferences["pick_up_where_you_left_off"])
         self.checkbox3.setChecked(self.player_preferences["save_track_value_on_close"])
@@ -136,8 +140,13 @@ class PreferencesView(QDialog):
         pick_changed = self.player_preferences["pick_up_where_you_left_off"] != self.checkbox2.isChecked()
         save_changed = self.player_preferences["save_track_value_on_close"] != self.checkbox3.isChecked()
         show_changed = self.player_preferences["show_subtitle_if_available"] != self.checkbox4.isChecked()
+       
+        back_short_changed = self.player_preferences["back_shortkey"] != self.text1.text()
+        forward_short_changed = self.player_preferences["forward_shortkey"] != self.text2.text()
+        playpause_short_changed = self.player_preferences["playpause_shortkey"] != self.text3.text()
+        
 
-        return back_changed or forward_changed or track_changed or loop_changed or pick_changed or save_changed or show_changed
+        return back_changed or forward_changed or track_changed or loop_changed or pick_changed or save_changed or show_changed or back_short_changed or playpause_short_changed or forward_short_changed
     
     def changes_applied(self):
         dlg = QMessageBox(self)
@@ -151,8 +160,8 @@ class PreferencesView(QDialog):
         if self.unsaved_changes():
             track_bar_conversion = 5
             self.controller.m_player.save_player_preferences(back=self.spinbox1.value(),forward=self.spinbox2.value(),track_pos=int(self.spinbox3.value() * track_bar_conversion),
-                                                         loop=self.checkbox1.isChecked(),pick=self.checkbox2.isChecked(),
-                                                         save=self.checkbox3.isChecked(),show=self.checkbox4.isChecked())
+                                                         loop=self.checkbox1.isChecked(),pick=self.checkbox2.isChecked(), save=self.checkbox3.isChecked(),show=self.checkbox4.isChecked(), 
+                                                         back_short=self.text1.text(), forwd_short=self.text2.text(), plpau_short =self.text3.text())
             self.changes_applied()
         super().accept()
         
@@ -212,14 +221,21 @@ class PreferencesView(QDialog):
         self.checkbox2 = QCheckBox("pick up where you left off")
         self.checkbox3 = QCheckBox("save speed value on close")
         self.checkbox4 = QCheckBox("show subtitle if available")
+
+        self.text1 = QLineEdit()
+        self.text2 = QLineEdit()
+        self.text3 = QLineEdit()
         
     
     def add_widgets(self):
         self.layoutt.setSpacing(10)
         self.layoutt.addRow(self.restorebutton)
         self.layoutt.addRow(QLabel("back value:"), self.spinbox1)
+        self.layoutt.addRow(QLabel("back short key:") , self.text1)
         self.layoutt.addRow(QLabel("forward value:"), self.spinbox2)
-        self.layoutt.addRow(QLabel("default speed value:"), self.spinbox3)
+        self.layoutt.addRow(QLabel("forward short key:") , self.text2)
+        self.layoutt.addRow(QLabel("play/pause short key:") , self.text3)
+        self.layoutt.addRow(QLabel("default speed value:"),self.spinbox3)
         self.layoutt.addRow(QLabel("The default speed value is used for")) 
         self.layoutt.addRow(QLabel("videos that you have never played.\n"))
         self.layoutt.addRow(self.checkbox1)
@@ -307,7 +323,7 @@ class WindowView(QMainWindow):
         self.btnBack = QPushButton(self)
         self.btnBack.setStyleSheet('QPushButton {background-color: silver; color: black;}')
         self.btnBack.setText("-{}".format(player_user_preferences["back_value"]))
-        self.btnBack.setShortcut('Ctrl+D')
+        self.btnBack.setShortcut(player_user_preferences["back_shortkey"])
 
         
 
@@ -315,15 +331,14 @@ class WindowView(QMainWindow):
         self.btnPlayPause = QPushButton(self)
         self.btnPlayPause.setStyleSheet('QPushButton {background-color: green; color: white;}')
         self.btnPlayPause.setFixedSize(105,30)  
-        
         self.btnPlayPause.setText("||")   
-        self.btnPlayPause.setShortcut('Ctrl+F')  
+        self.btnPlayPause.setShortcut(player_user_preferences["playpause_shortkey"])  
         
 
         self.btnForward = QPushButton(self)
         self.btnForward.setStyleSheet('QPushButton {background-color: silver; color: black;}')
         self.btnForward.setText("+{}".format(player_user_preferences["forward_value"]))   
-        self.btnForward.setShortcut('Ctrl+G')  
+        self.btnForward.setShortcut(player_user_preferences["forward_shortkey"])  
         
         
         

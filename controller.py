@@ -41,7 +41,9 @@ class Controller():
         
         
         self.thread = self.ThreadTimer(self)
-        self.thread.update_gui.connect(self.update_gui)
+        if sys.platform == "darwin":
+            self.thread.update_gui.connect(self.update_gui)
+        
         self.thread.start()
         
         sys.exit(self.window.app.exec())
@@ -51,6 +53,7 @@ class Controller():
         self.w_player.play()
         self.w_player.is_paused = False
         self.window.btnPlayPause.setText("||")
+        self.window.btnPlayPause.setShortcut(self.m_player.player_preferences["playpause_shortkey"])  
         self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: #981c12; color: white;}')
         if self.sem.available() == 0:
             self.sem.release(2)
@@ -61,7 +64,9 @@ class Controller():
         self.w_player.is_paused = True
         self.window.btnPlayPause.setText(">")
         self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: green; color: white;}')
-        self.sem.acquire(1)
+        self.window.btnPlayPause.setShortcut(self.m_player.player_preferences["playpause_shortkey"])  
+        if self.sem.available() > 0:
+            self.sem.acquire(1)
 
     def play_pause(self):
         self.pause() if self.w_player.is_playing() else self.play()
@@ -106,6 +111,11 @@ class Controller():
     
 
 
+    def slider_released_behavior(self):
+        self.w_player.set_time(self.window.loadbar.value())
+        time.sleep(0.1)
+        self.play()
+
     def set_view_connections(self):
         self.window.btnBack.clicked.connect(self.goback_and_update_gui)
         self.window.btnPlayPause.clicked.connect(self.play_pause)
@@ -114,9 +124,8 @@ class Controller():
 
         self.window.speed_slider.valueChanged.connect(self.changeSpeedVideo)
 
-        self.window.loadbar.sliderMoved.connect(lambda: self.w_player.set_time(self.window.loadbar.value()))
         self.window.loadbar.sliderPressed.connect(self.pause)
-        self.window.loadbar.sliderReleased.connect(self.play)
+        self.window.loadbar.sliderReleased.connect(self.slider_released_behavior)
         self.window.loadbar.valueChanged.connect(self.slider_clicked)
         self.window.tool_bar2.orientationChanged.connect(self.window.set_loadbar2orientation)
 
@@ -149,8 +158,14 @@ class Controller():
             while not self.isInterruptionRequested():
                 if self.controller.sem.available() == 0:
                     self.controller.sem.acquire(1)
+
                 time.sleep(0.5)
-                self.update_gui.emit()
+                ''' MacOS has problem if a external thread updates UI objects'''
+                if sys.platform == "darwin":
+                    self.update_gui.emit() 
+                else:
+                    self.controller.update_gui()
+
                 if not self.controller.w_player.is_playing(): # if is paused or stopped
                     self.controller.window.btnPlayPause.setText(">")
                     self.controller.window.btnPlayPause.setStyleSheet('QPushButton {background-color: green; color: white;}') 
@@ -159,7 +174,8 @@ class Controller():
                         if self.controller.m_player.player_preferences["loop_video"]:
                             self.controller.play()
                         else:
-                            self.controller.sem.acquire(1)
+                            if self.controller.sem.available() == 1:
+                                self.controller.sem.acquire(1)
                 
             
 if __name__ == '__main__':
