@@ -11,27 +11,116 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 
-''' 30/03/2023:
 
-
-                                    I WANT ADD A PROGRESSBAR WITH 4 STEPS AND DISABLE ALL BUTTONS IN MAINVIEW
-
-
-
-
-
-
-
-
-
-'''
 class WhisperModel(QThread):
 
     def __init__(self, controller, name_video, path_video):
             QThread.__init__(self)
+
             self.name_video = name_video
             self.path_video = path_video
             self.controller = controller
+            LANGUAGES = {
+    "en": "english",
+    "zh": "chinese",
+    "de": "german",
+    "es": "spanish",
+    "ru": "russian",
+    "ko": "korean",
+    "fr": "french",
+    "ja": "japanese",
+    "pt": "portuguese",
+    "tr": "turkish",
+    "pl": "polish",
+    "ca": "catalan",
+    "nl": "dutch",
+    "ar": "arabic",
+    "sv": "swedish",
+    "it": "italian",
+    "id": "indonesian",
+    "hi": "hindi",
+    "fi": "finnish",
+    "vi": "vietnamese",
+    "he": "hebrew",
+    "uk": "ukrainian",
+    "el": "greek",
+    "ms": "malay",
+    "cs": "czech",
+    "ro": "romanian",
+    "da": "danish",
+    "hu": "hungarian",
+    "ta": "tamil",
+    "no": "norwegian",
+    "th": "thai",
+    "ur": "urdu",
+    "hr": "croatian",
+    "bg": "bulgarian",
+    "lt": "lithuanian",
+    "la": "latin",
+    "mi": "maori",
+    "ml": "malayalam",
+    "cy": "welsh",
+    "sk": "slovak",
+    "te": "telugu",
+    "fa": "persian",
+    "lv": "latvian",
+    "bn": "bengali",
+    "sr": "serbian",
+    "az": "azerbaijani",
+    "sl": "slovenian",
+    "kn": "kannada",
+    "et": "estonian",
+    "mk": "macedonian",
+    "br": "breton",
+    "eu": "basque",
+    "is": "icelandic",
+    "hy": "armenian",
+    "ne": "nepali",
+    "mn": "mongolian",
+    "bs": "bosnian",
+    "kk": "kazakh",
+    "sq": "albanian",
+    "sw": "swahili",
+    "gl": "galician",
+    "mr": "marathi",
+    "pa": "punjabi",
+    "si": "sinhala",
+    "km": "khmer",
+    "sn": "shona",
+    "yo": "yoruba",
+    "so": "somali",
+    "af": "afrikaans",
+    "oc": "occitan",
+    "ka": "georgian",
+    "be": "belarusian",
+    "tg": "tajik",
+    "sd": "sindhi",
+    "gu": "gujarati",
+    "am": "amharic",
+    "yi": "yiddish",
+    "lo": "lao",
+    "uz": "uzbek",
+    "fo": "faroese",
+    "ht": "haitian creole",
+    "ps": "pashto",
+    "tk": "turkmen",
+    "nn": "nynorsk",
+    "mt": "maltese",
+    "sa": "sanskrit",
+    "lb": "luxembourgish",
+    "my": "myanmar",
+    "bo": "tibetan",
+    "tl": "tagalog",
+    "mg": "malagasy",
+    "as": "assamese",
+    "tt": "tatar",
+    "haw": "hawaiian",
+    "ln": "lingala",
+    "ha": "hausa",
+    "ba": "bashkir",
+    "jw": "javanese",
+    "su": "sundanese",
+}
     
     def run(self):
         self.create_subtitles_and_set_subtitles(self.name_video, self.path_video)
@@ -41,14 +130,15 @@ class WhisperModel(QThread):
         ''' imports are here because too heavy to import at startup'''
         import whisper 
         import torch
-        print("torch available: ", torch.cuda.is_available())
-        DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
         
+        DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+        print("device: ", DEVICE)
+
         print("Loading Whisper Model..")
         model = whisper.load_model('small', device=DEVICE)
 
         print("Creating Subtitles...")
-        result = model.transcribe(path_video, verbose=True, without_timestamps=True, language="en")
+        result = model.transcribe(path_video, verbose=True, without_timestamps=False, language="en")
 
         print("Subtitles created!")
 
@@ -58,6 +148,8 @@ class WhisperModel(QThread):
         srt = "srt/{}.srt".format(name_video)
         if self.controller.w_player.set_subtitle(srt) == 1:
             print("subtitles added correctly")
+    
+
     
 
 
@@ -88,9 +180,7 @@ class VideoModel():
         self.file_video_preferences = "video_preferences.json"
         self.name_video = "" # this is the name into json file
 
-
         self.video_info = {} #Title, Artist, Duration, Rate, etc.
-        
         
 
     def load_video_preferences_by_file(self, filename, videoname):

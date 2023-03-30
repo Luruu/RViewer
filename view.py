@@ -284,7 +284,7 @@ class WindowView(QMainWindow):
 
 
         if sys.platform == "win32": # for Windows
-            sys.argv += ['-platform', 'windows:darkmode=2']
+            sys.argv += ['-platform', 'windows:darkmode=1']
         
         
         self.app = QApplication(sys.argv)

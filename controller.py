@@ -26,7 +26,8 @@ class Controller():
         # source_path = "test/audio_short.wav"
 
         # source_path = "test/video2.mkv"
-        source_path = "test/video.mp4"
+        # source_path = "test/video.mp4"
+        source_path = "test/sample.mp4"
 
         sys.argv += [source_path]
 
