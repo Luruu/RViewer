@@ -1,5 +1,11 @@
 # RViewer
 
+### feature updates
+1. handle more subtitles
+2. create a window for subtitles
+3. add css for more gui objects
+4. add code documentation
+
 ### possible future updates
 1. handle playlists
 2. handle youtube videos

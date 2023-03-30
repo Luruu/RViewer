@@ -1,0 +1,40 @@
+1
+0:00:00 --> 0:00:30
+ I'm going to describe language models. Language models play a very important role in natural language processing, both in the classical view of natural language processing, but also in the modern framework of deep learning. Okay, there are some different techniques to develop language models, but today,
+
+2
+0:00:30 --> 0:01:00
+ just in this course, we just focus on the most basic and the classical one, which is a statistical language model, which is called n-gram. Okay, so this is the topic of our lecture today. But what is a language model? Basically, when we
+
+3
+0:01:00 --> 0:01:30
+ have a sentence, or which is a sequence of words, we want to typically to estimate the probability associated to that sentence. Okay, with respect to the other possible sentence that we connect. Okay, a related task is also to estimate
+
+4
+0:01:30 --> 0:02:00
+ the probability of an upcoming word given a set of previously occurred words. Okay, words. So these are the two tasks that we can do with the language models. Okay, so here, as you can see, we assume here that we have a sentence formed of n words, and we want to assign a probability occurrence to this sentence.
+
+5
+0:02:00 --> 0:02:30
+ And also, we can also, sorry for the repetition, we can also use or estimate the occurrence of a word, or a specific word here, the word, the fifth word of a sequence with respect to the previous words that occurred. In this case, w1, w3, w4. Now, a model, a probabilistic model, which is used
+
+6
+0:02:30 --> 0:03:00
+ for either these tasks is called language model. So a language model is a model that enable us to compute the probability of a sequence here, or to compute the probability of a word, which follows a sequence of the previous words as shown here. Okay, in literature, you can also
+
+7
+0:03:00 --> 0:03:30
+ find that language models are also called grammars. Anyway, the most used terms, and the one which is the most frequent in the community of the natural language processing, anyway, is a language model or LM for in short. Okay. Clearly, you can stop me if you do not understand something, so you can stop me
+
+8
+0:03:30 --> 0:04:00
+ and ask for some more details or clarifications. So today, we want to basically, once we introduce the language models, we want to know the way we want to learn, the way in which we are able to build a language model, starting from a corpus,
+
+9
+0:04:00 --> 0:04:30
+ and then we want to see the way in which, given that language model, we can estimate the probability of the sequence of words or to estimate the probability of a word which follows a sequence of given words already occurred. Okay. We can also, not this day, but next time, we can also
+
+10
+0:04:30 --> 0:05:00
+ overview the way in which these kind of models, the language models, are reused, for example, in the autocomplete applications in NLP. Okay. When we have, for example, we are writing down a given sentence, and the system is able to suggest to us the most probable word occurring after the ones that we have already typed. Okay.
+

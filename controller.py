@@ -3,9 +3,10 @@
 '''
 
 from view import PlayerView, WindowView
-from model import PlayerModel, VideoModel
+from model import PlayerModel, VideoModel, WhisperModel
 import sys
 import time
+import os
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -14,12 +15,24 @@ class Controller():
 
     def __init__(self):
         self.program_name = "RV"
-        # source_path is for testing only
-        # source_path = "test/test_sub.mkv"
+
+        ''' source_path is for testing only '''
+        #source_path = "test/test_sub.mkv"
+        # source_path = "test/input.mkv"
         # source_path = "test/output.mkv"
-        source_path = "test/B.mp3"
+
+        # source_path = "test/B.mp3"
+        # source_path = "test/audio.mp3"
+        # source_path = "test/audio_short.wav"
+
+        # source_path = "test/video2.mkv"
+        source_path = "test/video.mp4"
 
         sys.argv += [source_path]
+
+        if not os.path.exists(sys.argv[1]):
+            print("error: video file does not exists.")
+            sys.exit()
 
         self.sem_player = QSemaphore(0)
         self.w_player = PlayerView(self)
@@ -28,7 +41,7 @@ class Controller():
         self.m_player = PlayerModel()
         self.window = WindowView(self.program_name, self, self.m_player.player_preferences)
         self.anchorVLCtoWindow(self.w_player.get_istance_vlc_player(), self.window.videoframe.winId())
-        
+
         
         self.sem = QSemaphore(0)
         self.play_pause()
@@ -69,9 +82,8 @@ class Controller():
         self.window.btnPlayPause.setText(">")
         self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: green; color: white;}')
         self.window.btnPlayPause.setShortcut(self.m_player.player_preferences["playpause_shortkey"])  
-        ''' if self.sem.available() > 0:
-            self.sem.acquire(1)
-        '''
+      
+
     def play_pause(self):
         if self.w_player.is_playing():
             if self.sem.available() >= 1:
@@ -106,12 +118,48 @@ class Controller():
         # self.w_player.set_volume(self.m_video.video_preferences["volume_value"])
         self.window.volume_slider.setValue(self.m_video.video_preferences["volume_value"])
 
-        # show subtitles
-        print(self.w_player.get_sub_count())
+        # show subtitles 
+        self.buttonsub_operation = 2
+        # if user want show subtitles
+        if self.m_player.player_preferences["show_subtitle_if_available"]:
+        # if file contains subtitles
+            if self.w_player.get_sub_count() >= 2: # note: 1 is -1 for no subtitles
+                self.show_subtitles()
 
-        if self.w_player.get_sub_count() >= 2: # note: 1 is -1 for no subtitles
-            if self.m_player.player_preferences["show_subtitle_if_available"]:
+            # if file does not contain subtitles but srt file exists 
+            elif os.path.exists("srt/{}.srt".format(self.m_video.name_video)):
+                self.w_player.set_subtitle("srt/{}.srt".format(self.m_video.name_video))
+                self.buttonsub_operation = 0
                 self.window.btnSubtitle.setText("hide subtitles")
+        else:
+            self.buttonsub_operation = 2
+            self.window.btnSubtitle.setText("create subtitles")
+    
+    def hide_subtitles(self):
+        self.buttonsub_operation = 1
+        self.window.btnSubtitle.setText("show subtitles")
+        self.w_player.set_sub(self.w_player.get_sub_descriptions()[0][0])
+
+    def show_subtitles(self):
+        self.buttonsub_operation = 0
+        self.window.btnSubtitle.setText("hide subtitles")
+        self.w_player.set_sub(self.w_player.get_sub_descriptions()[1][0])
+
+
+    def handle_subtitles(self):
+        if self.buttonsub_operation == 0: # hide subtitles
+            self.hide_subtitles()
+        elif self.buttonsub_operation == 1: # show subtitles
+            self.show_subtitles()
+        elif self.buttonsub_operation == 2:   # whisper
+            self.pause()
+            self.whisper = WhisperModel(self, self.m_video.name_video, sys.argv[1])
+            self.whisper.start() # this method create subtitles and show them!
+            self.buttonsub_operation = 0
+            self.window.btnSubtitle.setText("hide subtitles")
+        else:
+            print("else handle_subtitle error!!")
+            
 
 
     def update_gui(self):
@@ -128,7 +176,7 @@ class Controller():
         self.window.labelduration.setText(self.m_video.convert_ms_to_hmmss(self.m_video.video_info["Duration"] - self.m_video.video_info["Position"]))
 
 
-    ''' This slot is only just used to handle mouse clicks.'''
+    ''' This slot is only used to handle mouse clicks.'''
     def slider_clicked(self):
         if self.window.loadbar.mouse_pressed:
             self.window.loadbar.mouse_pressed = False
@@ -157,7 +205,7 @@ class Controller():
         self.window.btnPlayPause.clicked.connect(self.play_pause)
         self.window.btnForward.clicked.connect(self.goforward_and_update_gui)
         self.window.btnpreferences.clicked.connect(self.window.show_preference_window)
-
+        self.window.btnSubtitle.clicked.connect(self.handle_subtitles)
         self.window.speed_slider.valueChanged.connect(self.changeSpeedVideo)
 
         self.window.loadbar.sliderPressed.connect(self.pause)

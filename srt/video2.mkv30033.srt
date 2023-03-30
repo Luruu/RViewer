@@ -1,0 +1,8 @@
+1
+0:00:00 --> 0:00:30
+ going to describe language models. Language models play a very important role in natural language processing, both in the classical view of natural language processing, but also in the modern framework of deep learning. Okay, there are some different techniques to develop language models, but today,
+
+2
+0:00:30 --> 0:00:30.010000
+ I'm going to show you how to develop language models.
+

@@ -40,7 +40,7 @@ class PlayerView(QThread):
         return self.vlc_player
         
     def set_subtitle(self, subtitle_path):
-        self.vlc_player.video_set_subtitle_file(subtitle_path)
+        return self.vlc_player.video_set_subtitle_file(subtitle_path)
     
     def play(self):
         return self.vlc_player.play()
@@ -98,6 +98,9 @@ class PlayerView(QThread):
     def get_sub(self):
         return self.vlc_player.video_get_spu()
     
+    def set_sub(self, i_spu):
+        return self.vlc_player.video_set_spu(i_spu)
+    
     def get_sub_descriptions(self):
         return self.vlc_player.video_get_spu_description()
     
@@ -106,6 +109,7 @@ class PlayerView(QThread):
     
     def set_sub_delay(self, delay):
         return self.vlc_player.video_set_spu_delay(delay)
+    
    
     def set_volume(self, volume):
         return self.vlc_player.audio_set_volume(volume)
@@ -280,14 +284,12 @@ class WindowView(QMainWindow):
 
 
         if sys.platform == "win32": # for Windows
-            sys.argv += ['-platform', 'windows:darkmode=1']
+            sys.argv += ['-platform', 'windows:darkmode=2']
         
         
         self.app = QApplication(sys.argv)
         self.app.setApplicationName(name_program)
-        print(self.app.style())
         self.app.setApplicationVersion("1.0")
-        # ------ TO-DO: CHECK HERE IF ARGV[1] IS A PATH OF A VIDEO
         
         self.app.setStyle('Fusion')
         super().__init__()
@@ -336,6 +338,7 @@ class WindowView(QMainWindow):
         self.addToolBarBreak(Qt.BottomToolBarArea)
         self.addToolBar(Qt.BottomToolBarArea, self.tool_bar2)
         self.addToolBar(Qt.TopToolBarArea, self.tool_bar3)
+        self.tool_bar3.setAllowedAreas(Qt.BottomToolBarArea | Qt.TopToolBarArea)
         
         self.btnBack = QPushButton(self)
         self.btnBack.setStyleSheet('QPushButton {background-color: silver; color: black;}')
@@ -425,7 +428,7 @@ class WindowView(QMainWindow):
         self.btnpreferences.setText("preferences")
 
         self.btnSubtitle = QPushButton(self)
-        self.btnSubtitle.setText("show subtitles")
+        self.btnSubtitle.setText("create subtitles")
        
         
 
@@ -450,8 +453,7 @@ class WindowView(QMainWindow):
         self.tool_bar3.addWidget(self.btnpreferences)
         self.tool_bar3.addWidget(self.spacer3)
         self.tool_bar3.addWidget(QLabel("volume"))
-        self.tool_bar3.addWidget(self.volume_slider)
-        # self.tool_bar3.addWidget(self.spacer4)        
+        self.tool_bar3.addWidget(self.volume_slider)     
         
     
     def set_loadbar2orientation(self):
