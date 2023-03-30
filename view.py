@@ -10,15 +10,23 @@ import vlc
 import sys
 
     
-class PlayerView():
+class PlayerView(QThread):
 
-    def __init__(self):
+    def __init__(self, controller):
+        QThread.__init__(self)
+        self.vlc_istance = None
+        self.vlc_player = None
+        self.media = None
+        self.controller = controller
+
+    def run(self):
         self.video_path = sys.argv[1]
         self.vlc_istance = vlc.Instance("--verbose -1")
         self.vlc_player = self.vlc_istance.media_player_new()
         self.media = self.vlc_istance.media_new(sys.argv[1])
         self.vlc_player.set_media(self.media)       
         self.is_paused = False
+        self.controller.sem_player.release(1)
         
     
     def get_media(self):
@@ -113,10 +121,13 @@ class PreferencesView(QDialog):
         self.player_preferences = self.controller.m_player.player_preferences
         self.nameprogram = self.controller.program_name
         self.setWindowTitle(self.nameprogram + " preferences")
+
         
+        self.setFixedSize(240, 480)
         self.set_widgets()
         self.add_widgets()
         self.track_bar_conversion = 5
+       
 
     def showEvent(self, event):
         self.spinbox1.setValue(int(self.player_preferences["back_value"]))
@@ -128,7 +139,7 @@ class PreferencesView(QDialog):
         
         self.checkbox1.setChecked(self.player_preferences["loop_video"])
         self.checkbox2.setChecked(self.player_preferences["pick_up_where_you_left_off"])
-        self.checkbox3.setChecked(self.player_preferences["save_track_value_on_close"])
+        self.checkbox3.setChecked(self.player_preferences["track_video"])
         self.checkbox4.setChecked(self.player_preferences["show_subtitle_if_available"])
         
 
@@ -138,7 +149,7 @@ class PreferencesView(QDialog):
         track_changed = self.player_preferences["track_value"] != int(self.spinbox3.value() * self.track_bar_conversion)
         loop_changed = self.player_preferences["loop_video"] != self.checkbox1.isChecked()
         pick_changed = self.player_preferences["pick_up_where_you_left_off"] != self.checkbox2.isChecked()
-        save_changed = self.player_preferences["save_track_value_on_close"] != self.checkbox3.isChecked()
+        trackvideo_changed = self.player_preferences["track_video"] != self.checkbox3.isChecked()
         show_changed = self.player_preferences["show_subtitle_if_available"] != self.checkbox4.isChecked()
        
         back_short_changed = self.player_preferences["back_shortkey"] != self.text1.text()
@@ -146,7 +157,7 @@ class PreferencesView(QDialog):
         playpause_short_changed = self.player_preferences["playpause_shortkey"] != self.text3.text()
         
 
-        return back_changed or forward_changed or track_changed or loop_changed or pick_changed or save_changed or show_changed or back_short_changed or playpause_short_changed or forward_short_changed
+        return back_changed or forward_changed or track_changed or loop_changed or pick_changed or trackvideo_changed or show_changed or back_short_changed or playpause_short_changed or forward_short_changed
     
     def changes_applied(self):
         dlg = QMessageBox(self)
@@ -219,14 +230,19 @@ class PreferencesView(QDialog):
 
         self.checkbox1 = QCheckBox("loop video")
         self.checkbox2 = QCheckBox("pick up where you left off")
-        self.checkbox3 = QCheckBox("save speed value on close")
-        self.checkbox4 = QCheckBox("show subtitle if available")
+        self.checkbox3 = QCheckBox("use video speed instead player speed")
+        self.checkbox4 = QCheckBox("show subtitle (if available) at startup")
 
         self.text1 = QLineEdit()
         self.text2 = QLineEdit()
         self.text3 = QLineEdit()
-        
-    
+
+        self.labelspeed1 = QLabel("The player speed value is used for")
+        self.labelspeed2 = QLabel("videos that you have never played.\n")
+        self.labelspeed1.setStyleSheet("QLabel {color: #4c4c4c;}")
+        self.labelspeed2.setStyleSheet("QLabel {color: #4c4c4c;}")
+
+
     def add_widgets(self):
         self.layoutt.setSpacing(10)
         self.layoutt.addRow(self.restorebutton)
@@ -235,9 +251,9 @@ class PreferencesView(QDialog):
         self.layoutt.addRow(QLabel("forward value:"), self.spinbox2)
         self.layoutt.addRow(QLabel("forward short key:") , self.text2)
         self.layoutt.addRow(QLabel("play/pause short key:") , self.text3)
-        self.layoutt.addRow(QLabel("default speed value:"),self.spinbox3)
-        self.layoutt.addRow(QLabel("The default speed value is used for")) 
-        self.layoutt.addRow(QLabel("videos that you have never played.\n"))
+        self.layoutt.addRow(QLabel("player speed value:"),self.spinbox3)
+        self.layoutt.addRow(self.labelspeed1) 
+        self.layoutt.addRow(self.labelspeed2)
         self.layoutt.addRow(self.checkbox1)
         self.layoutt.addRow(self.checkbox2)
         self.layoutt.addRow(self.checkbox3)
@@ -326,8 +342,6 @@ class WindowView(QMainWindow):
         self.btnBack.setShortcut(player_user_preferences["back_shortkey"])
 
         
-
-        
         self.btnPlayPause = QPushButton(self)
         self.btnPlayPause.setStyleSheet('QPushButton {background-color: green; color: white;}')
         self.btnPlayPause.setFixedSize(105,30)  
@@ -372,10 +386,6 @@ class WindowView(QMainWindow):
         self.labelduration.setText("00:00:00")
         self.labelduration.setAlignment(Qt.AlignCenter)
 
-        
-        self.timer = QTimer(self)
-        self.timer.setInterval(500)
-
 
         self.spacer1 = QWidget()
         self.spacer1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -403,7 +413,7 @@ class WindowView(QMainWindow):
         self.btnpreferences.setText("preferences")
 
         self.btnSubtitle = QPushButton(self)
-        self.btnSubtitle.setText("show Subtitles")
+        self.btnSubtitle.setText("show subtitles")
        
         
 

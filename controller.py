@@ -15,21 +15,24 @@ class Controller():
     def __init__(self):
         self.program_name = "RV"
         # source_path is for testing only
-        source_path = "test/test_sub.mkv"
-        #source_path = "test/input.mkv"
-        # source_path = "test/B.mp3"
+        # source_path = "test/test_sub.mkv"
+        # source_path = "test/output.mkv"
+        source_path = "test/B.mp3"
 
         sys.argv += [source_path]
 
-        
-        self.w_player = PlayerView()
+        self.sem_player = QSemaphore(0)
+        self.w_player = PlayerView(self)
+        self.w_player.start()
+        self.sem_player.acquire(1)
         self.m_player = PlayerModel()
         self.window = WindowView(self.program_name, self, self.m_player.player_preferences)
         self.anchorVLCtoWindow(self.w_player.get_istance_vlc_player(), self.window.videoframe.winId())
         
         
-        self.sem = QSemaphore(1)
+        self.sem = QSemaphore(0)
         self.play_pause()
+        self.sem.acquire(1)
         self.m_video = VideoModel(self.m_player.player_preferences)
         
 
@@ -54,9 +57,10 @@ class Controller():
         self.w_player.is_paused = False
         self.window.btnPlayPause.setText("||")
         self.window.btnPlayPause.setShortcut(self.m_player.player_preferences["playpause_shortkey"])  
-        self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: #981c12; color: white;}')
+        # self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: #981c12; color: white;}')
         if self.sem.available() == 0:
-            self.sem.release(2)
+            self.sem.release(1)
+        
             
         
     def pause(self):
@@ -65,11 +69,19 @@ class Controller():
         self.window.btnPlayPause.setText(">")
         self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: green; color: white;}')
         self.window.btnPlayPause.setShortcut(self.m_player.player_preferences["playpause_shortkey"])  
-        if self.sem.available() > 0:
+        ''' if self.sem.available() > 0:
             self.sem.acquire(1)
-
+        '''
     def play_pause(self):
-        self.pause() if self.w_player.is_playing() else self.play()
+        if self.w_player.is_playing():
+            if self.sem.available() >= 1:
+                self.sem.acquire(1)
+            self.pause()
+        else:
+            if self.sem.available() == 0:
+                self.sem.release(1)
+            self.play()
+
 
     def changeSpeedVideo(self):
         # for example: value on trackbar for 1.0x is 5, so 5/5 = 1. For 2.0x is 10, so 10/5 = 2 and so on.
@@ -80,9 +92,24 @@ class Controller():
 
     def initialize_gui(self): 
         self.m_video.load_videopreferences()
-        self.window.speed_slider.setValue(self.m_video.video_preferences["track_value"])  
+        # use video speed instead player speed
+        if self.m_player.player_preferences["track_video"]:
+            self.window.speed_slider.setValue(self.m_video.video_preferences["track_value"]) 
+        else:
+            self.window.speed_slider.setValue(self.m_player.player_preferences["track_value"]) 
         self.changeSpeedVideo()
-        self.w_player.set_time(self.m_video.video_preferences["load_pos"])
+
+        # if pick up where you left off is true, load last position
+        if self.m_player.player_preferences["pick_up_where_you_left_off"]:
+            self.w_player.set_time(self.m_video.video_preferences["load_pos"])
+
+        # show subtitles
+        print(self.w_player.get_sub_count())
+
+        if self.w_player.get_sub_count() >= 2: # note: 1 is -1 for no subtitles
+            if self.m_player.player_preferences["show_subtitle_if_available"]:
+                self.window.btnSubtitle.setText("hide subtitles")
+
 
     def update_gui(self):
         new_title = "{} - {} [{}]".format(self.program_name, self.m_video.video_info['Title'], self.m_video.video_info["Duration_hh_mm_ss"])
@@ -98,8 +125,10 @@ class Controller():
     def slider_clicked(self):
         if self.window.loadbar.mouse_pressed:
             self.window.loadbar.mouse_pressed = False
+            self.pause()
             self.w_player.set_time(self.window.loadbar.value())
             self.update_gui()
+            self.play()
             
     def goback_and_update_gui(self):
         self.w_player.go_back(self.m_video.convert_seconds_to_ms(self.m_player.player_preferences["back_value"])) 
@@ -138,9 +167,10 @@ class Controller():
             player.set_nsobject(id)
         else:
             print("ERROR: this software does not work with", sys.platform)
-            exit()
+            sys.exit()
     
     def close_program(self, event, track_pos,load_pos):
+        print("closing..")
         self.thread.terminate()
         self.m_video.save_video_preferences(track_pos=track_pos, load_pos=load_pos, vol= self.w_player.get_volume())
         geometry = self.window.geometry()
@@ -156,11 +186,14 @@ class Controller():
         
         def run(self):
             while not self.isInterruptionRequested():
-                if self.controller.sem.available() == 0:
+                print(self.controller.sem.available())  
+                if self.controller.sem.available() == 0 and self.controller.w_player.is_paused:  
+                    print("lock")  
                     self.controller.sem.acquire(1)
-
-                time.sleep(0.5)
-                ''' MacOS has problem if a external thread updates UI objects'''
+                    print("unlock")  
+                QThread.sleep(1)
+                
+                # MacOS has problem if a external thread updates UI objects
                 if sys.platform == "darwin":
                     self.update_gui.emit() 
                 else:
@@ -168,15 +201,13 @@ class Controller():
 
                 if not self.controller.w_player.is_playing(): # if is paused or stopped
                     self.controller.window.btnPlayPause.setText(">")
-                    self.controller.window.btnPlayPause.setStyleSheet('QPushButton {background-color: green; color: white;}') 
                     if not self.controller.w_player.is_paused: # if is stopped
                         self.controller.w_player.stop()
                         if self.controller.m_player.player_preferences["loop_video"]:
+                            self.controller.window.btnPlayPause.setEnabled(False)
+                            QThread.sleep(3)
                             self.controller.play()
-                        else:
-                            if self.controller.sem.available() == 1:
-                                self.controller.sem.acquire(1)
-                
+                            self.controller.window.btnPlayPause.setEnabled(True)
             
 if __name__ == '__main__':
     c = Controller()

@@ -100,7 +100,7 @@ class PlayerModel():
             "track_value": 5,
             "loop_video": True,
             "pick_up_where_you_left_off": True,
-            "save_track_value_on_close" : True,
+            "track_video" : True,
             "show_subtitle_if_available" : True,
             "back_shortkey" : "Ctrl+D",
             "playpause_shortkey" : "Ctrl+F",
@@ -133,7 +133,7 @@ class PlayerModel():
         if pick is not None:
             self.player_preferences["pick_up_where_you_left_off"] = pick
         if save is not None:
-            self.player_preferences["save_track_value_on_close"] = save
+            self.player_preferences["track_video"] = save
         if show is not None:
             self.player_preferences["show_subtitle_if_available"] = show
         if x is not None:
@@ -152,7 +152,7 @@ class PlayerModel():
         if forwd_short is not None:
             self.player_preferences["forward_shortkey"] = forwd_short
 
-        # note: all key-values are salved into file. i.e: if back is None, self.player_preferences["back_value"] value is saved into file! If it is not none, back value instead is saved into file!
+        # note: all key-values are salved into file. i.e: if back is None, self.player_preferences["back_value"] value is saved into file. If it is not none, back value instead is saved into file!
         self.save_preferences_in_file(self.file_player_preferences, self.player_preferences)
 
     
