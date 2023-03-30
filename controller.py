@@ -57,7 +57,7 @@ class Controller():
         self.w_player.is_paused = False
         self.window.btnPlayPause.setText("||")
         self.window.btnPlayPause.setShortcut(self.m_player.player_preferences["playpause_shortkey"])  
-        # self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: #981c12; color: white;}')
+        self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: #981c12; color: white;}')
         if self.sem.available() == 0:
             self.sem.release(1)
         
@@ -103,6 +103,9 @@ class Controller():
         if self.m_player.player_preferences["pick_up_where_you_left_off"]:
             self.w_player.set_time(self.m_video.video_preferences["load_pos"])
 
+        # self.w_player.set_volume(self.m_video.video_preferences["volume_value"])
+        self.window.volume_slider.setValue(self.m_video.video_preferences["volume_value"])
+
         # show subtitles
         print(self.w_player.get_sub_count())
 
@@ -112,7 +115,11 @@ class Controller():
 
 
     def update_gui(self):
-        new_title = "{} - {} [{}]".format(self.program_name, self.m_video.video_info['Title'], self.m_video.video_info["Duration_hh_mm_ss"])
+        if self.m_video.video_info["Artist"] is None:
+            new_title = "{} - {} [{}]".format(self.program_name, self.m_video.video_info['Title'], self.m_video.video_info["Duration_hh_mm_ss"])
+        else:
+            new_title = "{} - {} by {} [{}]".format(self.program_name, self.m_video.video_info['Title'], self.m_video.video_info["Artist"],  self.m_video.video_info["Duration_hh_mm_ss"])
+        
         self.window.setWindowTitle(new_title)
         self.window.loadbar.setMaximum(self.m_video.video_info["Duration"])
         self.m_video.video_info["Position"] = self.w_player.get_time()
@@ -156,6 +163,8 @@ class Controller():
         self.window.loadbar.sliderPressed.connect(self.pause)
         self.window.loadbar.sliderReleased.connect(self.slider_released_behavior)
         self.window.loadbar.valueChanged.connect(self.slider_clicked)
+        self.window.volume_slider.valueChanged.connect(lambda: self.w_player.set_volume(self.window.volume_slider.value()))
+
         self.window.tool_bar2.orientationChanged.connect(self.window.set_loadbar2orientation)
 
     def anchorVLCtoWindow(self, player, id):
@@ -186,7 +195,7 @@ class Controller():
         
         def run(self):
             while not self.isInterruptionRequested():
-                print(self.controller.sem.available())  
+                # print(self.controller.sem.available())  
                 if self.controller.sem.available() == 0 and self.controller.w_player.is_paused:  
                     print("lock")  
                     self.controller.sem.acquire(1)

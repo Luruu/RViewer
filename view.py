@@ -277,7 +277,8 @@ class WindowView(QMainWindow):
 
         with open(sliderbar_css, 'r') as f:
             self.speedslider_style = f.read()
-        
+
+
         if sys.platform == "win32": # for Windows
             sys.argv += ['-platform', 'windows:darkmode=1']
         
@@ -376,8 +377,19 @@ class WindowView(QMainWindow):
         self.speed_slider.setToolTip("speed video")
         self.speed_slider.setStyleSheet(self.speedslider_style)  
        
+        self.volume_slider = SliderClicker()
+        self.volume_slider.setOrientation(Qt.Vertical)
+        self.volume_slider.setMinimum(1)
+        self.volume_slider.setMaximum(125)
+       
+        available_width = self.screen().availableGeometry().width()
+        self.volume_slider.setFixedHeight(22)
+        self.volume_slider.setValue(100)
+        self.volume_slider.setTickInterval(10)
+        self.volume_slider.setTickPosition(SliderClicker.TicksLeft)
         
-        
+                                         
+                                         
         self.label_speed = QLabel(self)
         
         self.label_speed.setAlignment(Qt.AlignCenter)
@@ -393,13 +405,13 @@ class WindowView(QMainWindow):
         self.spacer2 = QWidget()
         self.spacer2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        '''
+        
         self.spacer3 = QWidget()
         self.spacer3.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
+        
         self.spacer4 = QWidget()
         self.spacer4.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
+        '''
         self.spacer5 = QWidget()
         self.spacer5.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
@@ -425,7 +437,7 @@ class WindowView(QMainWindow):
         self.tool_bar.addWidget(self.btnPlayPause)
         self.tool_bar.addWidget(self.btnForward)
         self.tool_bar.addWidget(self.spacer2)
-
+        
 
         self.tool_bar2.addWidget(self.labelposition)
         self.tool_bar2.addWidget(self.loadbar)
@@ -436,7 +448,10 @@ class WindowView(QMainWindow):
         self.tool_bar3.addWidget(self.label_speed) 
         self.tool_bar3.addWidget(self.btnSubtitle)
         self.tool_bar3.addWidget(self.btnpreferences)
-        
+        self.tool_bar3.addWidget(self.spacer3)
+        self.tool_bar3.addWidget(QLabel("volume"))
+        self.tool_bar3.addWidget(self.volume_slider)
+        # self.tool_bar3.addWidget(self.spacer4)        
         
     
     def set_loadbar2orientation(self):
