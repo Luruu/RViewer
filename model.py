@@ -5,6 +5,7 @@
 import datetime
 import vlc
 import json
+import sys
 import os.path
 from PySide6.QtCore import *
 from PySide6.QtGui import *
@@ -20,107 +21,8 @@ class WhisperModel(QThread):
             self.name_video = name_video
             self.path_video = path_video
             self.controller = controller
-            LANGUAGES = {
-    "en": "english",
-    "zh": "chinese",
-    "de": "german",
-    "es": "spanish",
-    "ru": "russian",
-    "ko": "korean",
-    "fr": "french",
-    "ja": "japanese",
-    "pt": "portuguese",
-    "tr": "turkish",
-    "pl": "polish",
-    "ca": "catalan",
-    "nl": "dutch",
-    "ar": "arabic",
-    "sv": "swedish",
-    "it": "italian",
-    "id": "indonesian",
-    "hi": "hindi",
-    "fi": "finnish",
-    "vi": "vietnamese",
-    "he": "hebrew",
-    "uk": "ukrainian",
-    "el": "greek",
-    "ms": "malay",
-    "cs": "czech",
-    "ro": "romanian",
-    "da": "danish",
-    "hu": "hungarian",
-    "ta": "tamil",
-    "no": "norwegian",
-    "th": "thai",
-    "ur": "urdu",
-    "hr": "croatian",
-    "bg": "bulgarian",
-    "lt": "lithuanian",
-    "la": "latin",
-    "mi": "maori",
-    "ml": "malayalam",
-    "cy": "welsh",
-    "sk": "slovak",
-    "te": "telugu",
-    "fa": "persian",
-    "lv": "latvian",
-    "bn": "bengali",
-    "sr": "serbian",
-    "az": "azerbaijani",
-    "sl": "slovenian",
-    "kn": "kannada",
-    "et": "estonian",
-    "mk": "macedonian",
-    "br": "breton",
-    "eu": "basque",
-    "is": "icelandic",
-    "hy": "armenian",
-    "ne": "nepali",
-    "mn": "mongolian",
-    "bs": "bosnian",
-    "kk": "kazakh",
-    "sq": "albanian",
-    "sw": "swahili",
-    "gl": "galician",
-    "mr": "marathi",
-    "pa": "punjabi",
-    "si": "sinhala",
-    "km": "khmer",
-    "sn": "shona",
-    "yo": "yoruba",
-    "so": "somali",
-    "af": "afrikaans",
-    "oc": "occitan",
-    "ka": "georgian",
-    "be": "belarusian",
-    "tg": "tajik",
-    "sd": "sindhi",
-    "gu": "gujarati",
-    "am": "amharic",
-    "yi": "yiddish",
-    "lo": "lao",
-    "uz": "uzbek",
-    "fo": "faroese",
-    "ht": "haitian creole",
-    "ps": "pashto",
-    "tk": "turkmen",
-    "nn": "nynorsk",
-    "mt": "maltese",
-    "sa": "sanskrit",
-    "lb": "luxembourgish",
-    "my": "myanmar",
-    "bo": "tibetan",
-    "tl": "tagalog",
-    "mg": "malagasy",
-    "as": "assamese",
-    "tt": "tatar",
-    "haw": "hawaiian",
-    "ln": "lingala",
-    "ha": "hausa",
-    "ba": "bashkir",
-    "jw": "javanese",
-    "su": "sundanese",
-}
+           
+            
     
     def run(self):
         self.create_subtitles_and_set_subtitles(self.name_video, self.path_video)
@@ -132,22 +34,24 @@ class WhisperModel(QThread):
         import torch
         
         DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-        print("device: ", DEVICE)
-
-        print("Loading Whisper Model..")
-        model = whisper.load_model('small', device=DEVICE)
+        NAME_MODEL = 'small'
+        print("Loading Whisper {} Model on '{}' [torch.cuda {}]".format(NAME_MODEL.upper(), "GPU" if DEVICE == "cuda" else "CPU", "available" if DEVICE == "cuda" else "NOT available"))
+        model = whisper.load_model(NAME_MODEL, device=DEVICE)
 
         print("Creating Subtitles...")
         result = model.transcribe(path_video, verbose=True, without_timestamps=False, language="en")
-
+        
         print("Subtitles created!")
 
         self.create_srt(name_video, result)
         
         print("file Subtitles created!")
-        srt = "srt/{}.srt".format(name_video)
+        srt = os.path.join('srt', "{}.srt".format(name_video)) 
+        # srt = "srt/{}.srt".format(name_video)
         if self.controller.w_player.set_subtitle(srt) == 1:
             print("subtitles added correctly")
+        else:
+            print("cannot add subtitles")
     
 
     
@@ -261,6 +165,7 @@ class PlayerModel():
             "back_shortkey" : "Ctrl+D",
             "playpause_shortkey" : "Ctrl+F",
             "forward_shortkey" : "Ctrl+G",
+            "windows_dark_mode": sys.platform == "win32",
             "x" : 0,
             "y": 0,
             "dim": 0,
@@ -277,7 +182,7 @@ class PlayerModel():
         with open(self.file_player_preferences, 'r') as f: 
             self.player_preferences = json.load(f) #update player preferences values with player_preferences.json 
         
-    def save_player_preferences(self,back=None,forward=None,track_pos=None,loop=None,pick=None,save=None,show=None,x=None,y=None,dim=None,hei=None, back_short=None, plpau_short=None, forwd_short=None):
+    def save_player_preferences(self,back=None,forward=None,track_pos=None,loop=None,pick=None,save=None,show=None,x=None,y=None,dim=None,hei=None, back_short=None, plpau_short=None, forwd_short=None,darkmodewin=None):
         if back is not None:
             self.player_preferences["back_value"] = back
         if forward is not None:
@@ -307,6 +212,9 @@ class PlayerModel():
             self.player_preferences["playpause_shortkey"] = plpau_short
         if forwd_short is not None:
             self.player_preferences["forward_shortkey"] = forwd_short
+
+        if darkmodewin is not None:
+            self.player_preferences["windows_dark_mode"] = darkmodewin
 
         # note: all key-values are salved into file. i.e: if back is None, self.player_preferences["back_value"] value is saved into file. If it is not none, back value instead is saved into file!
         self.save_preferences_in_file(self.file_player_preferences, self.player_preferences)

@@ -2,7 +2,9 @@
     controller
 '''
 
-from view import PlayerView, WindowView
+from mainview import MainView
+from views import PlayerView
+
 from model import PlayerModel, VideoModel, WhisperModel
 import sys
 import time
@@ -17,7 +19,8 @@ class Controller():
         self.program_name = "RV"
 
         ''' source_path is for testing only '''
-        #source_path = "test/test_sub.mkv"
+        # source_path = "test/test_sub.mkv"
+        source_path = "test/test_without_subs.mp4"
         # source_path = "test/input.mkv"
         # source_path = "test/output.mkv"
 
@@ -27,7 +30,7 @@ class Controller():
 
         # source_path = "test/video2.mkv"
         # source_path = "test/video.mp4"
-        source_path = "test/sample.mp4"
+        # source_path = "test/sample.mp4"
 
         sys.argv += [source_path]
 
@@ -40,7 +43,7 @@ class Controller():
         self.w_player.start()
         self.sem_player.acquire(1)
         self.m_player = PlayerModel()
-        self.window = WindowView(self.program_name, self, self.m_player.player_preferences)
+        self.window = MainView(self.program_name, self, self.m_player.player_preferences)
         self.anchorVLCtoWindow(self.w_player.get_istance_vlc_player(), self.window.videoframe.winId())
 
         
@@ -62,7 +65,10 @@ class Controller():
             self.thread.update_gui.connect(self.update_gui)
         
         self.thread.start()
-        
+
+        self.m_whisper = WhisperModel(self, self.m_video.name_video, sys.argv[1])
+        self.window.whisper_window.name_video = self.m_video.name_video
+
         sys.exit(self.window.app.exec())
     
 
@@ -74,9 +80,7 @@ class Controller():
         self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: #981c12; color: white;}')
         if self.sem.available() == 0:
             self.sem.release(1)
-        
-            
-        
+                      
     def pause(self):
         self.w_player.pause()
         self.w_player.is_paused = True
@@ -84,7 +88,6 @@ class Controller():
         self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: green; color: white;}')
         self.window.btnPlayPause.setShortcut(self.m_player.player_preferences["playpause_shortkey"])  
       
-
     def play_pause(self):
         if self.w_player.is_playing():
             if self.sem.available() >= 1:
@@ -95,7 +98,6 @@ class Controller():
                 self.sem.release(1)
             self.play()
 
-
     def changeSpeedVideo(self):
         # for example: value on trackbar for 1.0x is 5, so 5/5 = 1. For 2.0x is 10, so 10/5 = 2 and so on.
         new_speed = self.window.speed_slider.value() / 5
@@ -103,39 +105,75 @@ class Controller():
         self.w_player.set_rate(new_speed)
 
 
-    def initialize_gui(self): 
-        self.m_video.load_videopreferences()
+    def __check_track_video_preference(self):
         # use video speed instead player speed
         if self.m_player.player_preferences["track_video"]:
             self.window.speed_slider.setValue(self.m_video.video_preferences["track_value"]) 
         else:
             self.window.speed_slider.setValue(self.m_player.player_preferences["track_value"]) 
         self.changeSpeedVideo()
-
+    
+    def __check_pick_up_where_you_left_off_preference(self):
         # if pick up where you left off is true, load last position
         if self.m_player.player_preferences["pick_up_where_you_left_off"]:
             self.w_player.set_time(self.m_video.video_preferences["load_pos"])
 
+    
+    def __check_volume_preference(self):
         # self.w_player.set_volume(self.m_video.video_preferences["volume_value"])
         self.window.volume_slider.setValue(self.m_video.video_preferences["volume_value"])
+    
+    def __check_if_audiotrack_exist(self):
+        if self.w_player.get_audio_count() <= 0:
+            self.window.btnSubtitle.setEnabled(False)
+            self.window.btnSubtitle.setText("no audio track found")
+            return False
+        else:
+            return True
 
-        # show subtitles 
-        self.buttonsub_operation = 2
+    def __check_show_subtitle_if_available_preference(self):
+        
+        #check if video contains audiotracks
+        if not self.__check_if_audiotrack_exist():
+            return
+        
         # if user want show subtitles
         if self.m_player.player_preferences["show_subtitle_if_available"]:
+            str_path = os.path.join('srt', "{}.srt".format(self.m_video.name_video)) 
+
         # if file contains subtitles
             if self.w_player.get_sub_count() >= 2: # note: 1 is -1 for no subtitles
                 self.show_subtitles()
-
             # if file does not contain subtitles but srt file exists 
-            elif os.path.exists("srt/{}.srt".format(self.m_video.name_video)):
-                self.w_player.set_subtitle("srt/{}.srt".format(self.m_video.name_video))
+            elif os.path.exists(str_path):
+                self.w_player.set_subtitle(str_path)
                 self.buttonsub_operation = 0
                 self.window.btnSubtitle.setText("hide subtitles")
+            else:
+                print("no sutbtitles found")
+
+                self.buttonsub_operation = 2
+
         else:
             self.buttonsub_operation = 2
-            self.window.btnSubtitle.setText("create subtitles")
-    
+            self.window.btnSubtitle.setText("add subtitles")
+        
+
+        
+
+    def initialize_gui(self): 
+        self.m_video.load_videopreferences()
+
+        self.__check_track_video_preference()
+        
+        self.__check_pick_up_where_you_left_off_preference()
+        
+        self.__check_volume_preference()
+        
+        self.__check_show_subtitle_if_available_preference()
+       
+        
+
     def hide_subtitles(self):
         self.buttonsub_operation = 1
         self.window.btnSubtitle.setText("show subtitles")
@@ -146,28 +184,27 @@ class Controller():
         self.window.btnSubtitle.setText("hide subtitles")
         self.w_player.set_sub(self.w_player.get_sub_descriptions()[1][0])
 
-
     def handle_subtitles(self):
         if self.buttonsub_operation == 0: # hide subtitles
             self.hide_subtitles()
         elif self.buttonsub_operation == 1: # show subtitles
             self.show_subtitles()
         elif self.buttonsub_operation == 2:   # whisper
-            self.pause()
-            self.whisper = WhisperModel(self, self.m_video.name_video, sys.argv[1])
-            self.whisper.start() # this method create subtitles and show them!
-            self.buttonsub_operation = 0
-            self.window.btnSubtitle.setText("hide subtitles")
+            self.window.show_whisper_window()
         else:
             print("else handle_subtitle error!!")
             
-
+    def do_subtitles(self):
+        self.pause()
+        self.m_whisper.start() # this method create subtitles and show them!
+        self.buttonsub_operation = 0
+        self.window.btnSubtitle.setText("hide subtitles")
 
     def update_gui(self):
         if self.m_video.video_info["Artist"] is None:
             new_title = "{} - {} [{}]".format(self.program_name, self.m_video.video_info['Title'], self.m_video.video_info["Duration_hh_mm_ss"])
         else:
-            new_title = "{} - {} by {} [{}]".format(self.program_name, self.m_video.video_info['Title'], self.m_video.video_info["Artist"],  self.m_video.video_info["Duration_hh_mm_ss"])
+            new_title = "{} - {} by {} [{}]".format(self.program_name, self.m_video.video_info['Title'], self.m_video.video_info["Artist"], self.m_video.video_info["Duration_hh_mm_ss"])
         
         self.window.setWindowTitle(new_title)
         self.window.loadbar.setMaximum(self.m_video.video_info["Duration"])
@@ -194,8 +231,6 @@ class Controller():
         self.w_player.go_forward(self.m_video.convert_seconds_to_ms(self.m_player.player_preferences["forward_value"])) 
         self.update_gui()
     
-
-
     def slider_released_behavior(self):
         self.w_player.set_time(self.window.loadbar.value())
         time.sleep(0.1)
@@ -229,10 +264,15 @@ class Controller():
     
     def close_program(self, event, track_pos,load_pos):
         print("closing..")
+        self.window.preference_window.close()
+        self.window.whisper_window.close()
         self.thread.terminate()
+        
         self.m_video.save_video_preferences(track_pos=track_pos, load_pos=load_pos, vol= self.w_player.get_volume())
         geometry = self.window.geometry()
         self.m_player.save_player_preferences(x=geometry.x(), y=geometry.y(), dim=geometry.width(), hei=geometry.height())
+
+
 
 
     # to avoid freezes, I use this QThread as a timer
