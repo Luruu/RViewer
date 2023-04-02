@@ -4,8 +4,11 @@
 
 from mainview import MainView
 from views import PlayerView
+from model import PlayerModel, VideoModel
 
-from model import PlayerModel, VideoModel, WhisperModel
+from threads import WhisperModel, ThreadTimer
+
+
 import sys
 import time
 import os
@@ -19,20 +22,11 @@ class Controller():
         self.program_name = "RV"
 
         ''' source_path is for testing only '''
-        # source_path = "test/test_sub.mkv"
-        source_path = "test/test_without_subs.mp4"
-        # source_path = "test/input.mkv"
-        # source_path = "test/output.mkv"
+        source_path = ["test/test_sub.mkv", "test/test_without_subs.mp4", "test/input.mkv", "test/output.mkv", "test/B.mp3", "test/audio.mp3", "test/audio_short.wav",
+                       "test/video2.mkv", "test/video.mp4", "test/sample.mp4"]
+       
 
-        # source_path = "test/B.mp3"
-        # source_path = "test/audio.mp3"
-        # source_path = "test/audio_short.wav"
-
-        # source_path = "test/video2.mkv"
-        # source_path = "test/video.mp4"
-        # source_path = "test/sample.mp4"
-
-        sys.argv += [source_path]
+        sys.argv += [source_path[8]]
 
         if not os.path.exists(sys.argv[1]):
             print("error: video file does not exists.")
@@ -60,7 +54,7 @@ class Controller():
         self.initialize_gui()
         
         
-        self.thread = self.ThreadTimer(self)
+        self.thread = ThreadTimer(self)
         if sys.platform == "darwin":
             self.thread.update_gui.connect(self.update_gui)
         
@@ -275,37 +269,8 @@ class Controller():
 
 
 
-    # to avoid freezes, I use this QThread as a timer
-    class ThreadTimer(QThread):
-        update_gui = Signal()
-        def __init__(self,controller):
-            QThread.__init__(self)
-            self.controller = controller
-        
-        def run(self):
-            while not self.isInterruptionRequested():
-                # print(self.controller.sem.available())  
-                if self.controller.sem.available() == 0 and self.controller.w_player.is_paused:  
-                    print("lock")  
-                    self.controller.sem.acquire(1)
-                    print("unlock")  
-                QThread.sleep(1)
-                
-                # MacOS has problem if a external thread updates UI objects
-                if sys.platform == "darwin":
-                    self.update_gui.emit() 
-                else:
-                    self.controller.update_gui()
-
-                if not self.controller.w_player.is_playing(): # if is paused or stopped
-                    self.controller.window.btnPlayPause.setText(">")
-                    if not self.controller.w_player.is_paused: # if is stopped
-                        self.controller.w_player.stop()
-                        if self.controller.m_player.player_preferences["loop_video"]:
-                            self.controller.window.btnPlayPause.setEnabled(False)
-                            QThread.sleep(3)
-                            self.controller.play()
-                            self.controller.window.btnPlayPause.setEnabled(True)
+    
+                            
             
 if __name__ == '__main__':
     c = Controller()

@@ -1,6 +1,6 @@
 QSlider::groove:horizontal{
     border: 1px solid #000000;
-    background: white ;
+    background: #434446 ;
     height: 7px;
     border-radius: 3px;
     } 
@@ -32,7 +32,7 @@ QSlider::groove:horizontal{
     
     /*Verticales*/
     QSlider::groove:vertical{
-    border: 1px solid #df0000;
+    border: 1px solid #110303;
     background: white;
     width:7px;
     height: 55px;
@@ -63,6 +63,6 @@ QSlider::groove:horizontal{
     /*Horizontales y Verticales*/
     QSlider::handle:horizontal:hover,
     QSlider::handle:vertical:hover{
-    border: 1px solid #981515;
+    border: 1px solid hsl(0, 5%, 33%);
     border-radius: 3px;
     }
