@@ -6,7 +6,7 @@ from mainview import MainView
 from views import PlayerView
 from model import PlayerModel, VideoModel
 
-from threads import WhisperModel, ThreadTimer
+from threads import Whisper, ThreadTimer
 
 
 import sys
@@ -26,7 +26,7 @@ class Controller():
                        "test/video2.mkv", "test/video.mp4", "test/sample.mp4"]
        
 
-        sys.argv += [source_path[8]]
+        sys.argv += [source_path[7]]
 
         if not os.path.exists(sys.argv[1]):
             print("error: video file does not exists.")
@@ -47,22 +47,24 @@ class Controller():
         self.m_video = VideoModel(self.m_player.player_preferences)
         
 
-        self.set_view_connections()
+        self.thread = ThreadTimer(self)
+
+        
+
+        
         self.w_player.parse_media()
         self.window.show() 
         self.m_video.get_videoinfo_byvideo(self.w_player)
         self.initialize_gui()
         
-        
-        self.thread = ThreadTimer(self)
+    
         if sys.platform == "darwin":
             self.thread.update_gui.connect(self.update_gui)
         
+        self.whisper = Whisper(self, self.m_video.name_video, sys.argv[1])
+        # self.window.whisper_window.name_video = self.m_video.name_video
+        self.set_view_connections()
         self.thread.start()
-
-        self.m_whisper = WhisperModel(self, self.m_video.name_video, sys.argv[1])
-        self.window.whisper_window.name_video = self.m_video.name_video
-
         sys.exit(self.window.app.exec())
     
 
@@ -76,11 +78,12 @@ class Controller():
             self.sem.release(1)
                       
     def pause(self):
-        self.w_player.pause()
-        self.w_player.is_paused = True
-        self.window.btnPlayPause.setText(">")
-        self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: green; color: white;}')
-        self.window.btnPlayPause.setShortcut(self.m_player.player_preferences["playpause_shortkey"])  
+        if self.w_player.is_playing():
+            self.w_player.pause()
+            self.w_player.is_paused = True
+            self.window.btnPlayPause.setText(">")
+            self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: green; color: white;}')
+            self.window.btnPlayPause.setShortcut(self.m_player.player_preferences["playpause_shortkey"])  
       
     def play_pause(self):
         if self.w_player.is_playing():
@@ -153,8 +156,6 @@ class Controller():
             self.window.btnSubtitle.setText("add subtitles")
         
 
-        
-
     def initialize_gui(self): 
         self.m_video.load_videopreferences()
 
@@ -190,9 +191,43 @@ class Controller():
             
     def do_subtitles(self):
         self.pause()
-        self.m_whisper.start() # this method create subtitles and show them!
+        self.whisper.lang_sub = self.window.whisper_window.combobox2.currentText()
+        self.whisper.model = self.window.whisper_window.combobox3.currentText()
+        
+        self.whisper.start() # this method create subtitles and show them!
+
         self.buttonsub_operation = 0
         self.window.btnSubtitle.setText("hide subtitles")
+
+    def update_progress_whisper(self,message,value):
+        if value == 0:
+            self.window.whisper_window.progressbar.setVisible(True)
+            # self.window.whisper_window.textedit.setVisible(True)
+            self.window.whisper_window.setEnabled(False)
+            self.window.whisper_window.setFixedSize(255, 360)
+        
+            self.window.setEnabled(False)
+            return
+
+        self.window.whisper_window.progressbar.setValue(value if value <= 6 else 0) # 7 is used for error
+        self.window.whisper_window.textedit.append("{}\n".format(message))
+
+        if value == 6 or value == 7:
+            self.window.whisper_window.setEnabled(True)
+            self.window.whisper_window.setFixedSize(255, 300)
+            self.thread.sleep(2)
+            self.window.whisper_window.progressbar.setVisible(False)
+            self.window.setEnabled(True)
+
+            self.window.whisper_window.close()
+
+    def set_subtitles_by_file(self, srt):
+        if self.w_player.set_subtitle(srt) == 1:
+            print("subtitles added correctly")
+            return True
+        else:
+            print("error: cannot add subtitles")
+            return False
 
     def update_gui(self):
         if self.m_video.video_info["Artist"] is None:
@@ -245,6 +280,12 @@ class Controller():
 
         self.window.tool_bar2.orientationChanged.connect(self.window.set_loadbar2orientation)
 
+
+
+        self.whisper.progress_update.connect(self.update_progress_whisper)
+
+        self.window.whisper_window.createbutton.clicked.connect(self.do_subtitles)
+
     def anchorVLCtoWindow(self, player, id):
         if sys.platform.startswith('linux'): # for Linux using the X Server
             player.set_xwindow(id)
@@ -265,7 +306,7 @@ class Controller():
         self.m_video.save_video_preferences(track_pos=track_pos, load_pos=load_pos, vol= self.w_player.get_volume())
         geometry = self.window.geometry()
         self.m_player.save_player_preferences(x=geometry.x(), y=geometry.y(), dim=geometry.width(), hei=geometry.height())
-
+        
 
 
 

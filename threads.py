@@ -1,7 +1,7 @@
 ''' 
     Model
 '''
-
+import time
 import os.path
 import datetime
 import sys
@@ -9,54 +9,60 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-class WhisperModel(QThread):
-
-    def __init__(self, controller, name_video, path_video):
+class Whisper(QThread):
+    progress_update = Signal(str, int)
+    def __init__(self, controller, name_video , path_video):
+            
             QThread.__init__(self)
             self.name_video = name_video
             self.path_video = path_video
             self.controller = controller
-        
+            self.lang_sub = ""
+            self.model = ""
+            
     def run(self):
-        self.create_subtitles_and_set_subtitles(self.name_video, self.path_video)
-
-
-    def create_subtitles_and_set_subtitles(self, name_video, path_video):
         ''' imports are here because too heavy to import at startup'''
+        self.progress_update.emit("starting Whisper..", 0) 
         import whisper 
         import torch
         
         DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-        NAME_MODEL = 'small'
-        print("Loading Whisper {} Model on '{}' [torch.cuda {}]".format(NAME_MODEL.upper(), "GPU" if DEVICE == "cuda" else "CPU", "available" if DEVICE == "cuda" else "NOT available"))
-        model = whisper.load_model(NAME_MODEL, device=DEVICE)
 
-        print("Creating Subtitles...")
-        result = model.transcribe(path_video, verbose=True, without_timestamps=False, language="en")
+        current_time = time.strftime("%H:%M:%S", time.localtime())
         
-        print("Subtitles created!")
+        self.progress_update.emit("{}: Loading Whisper {} Model on\n '{}' [torch.cuda {}]".format(current_time, self.model.upper(), "GPU" if DEVICE == "cuda" else "CPU", "available" if DEVICE == "cuda" else "NOT available"),1) 
+        model = whisper.load_model(self.model, device=DEVICE)
 
-        self.create_srt(name_video, result)
+        self.progress_update.emit("Creating Subtitles...", 3) 
+    
+
+        result = model.transcribe(self.path_video, verbose=False, without_timestamps=False, language=self.lang_dub)
         
-        print("file Subtitles created!")
-        srt = os.path.join('srt', "{}.srt".format(name_video)) 
-  
-        if self.controller.w_player.set_subtitle(srt) == 1:
-            print("subtitles added correctly")
+        self.progress_update.emit("Subtitles created!", 4) 
+
+        srt_file_name = os.path.join('srt', "{}.srt".format(self.name_video))
+       
+        self.create_srt(srt_file_name, result)
+        self.progress_update.emit("srt file Subtitles created!", 5) 
+        
+        
+        if self.controller.set_subtitles_by_file(srt_file_name):
+            self.progress_update.emit("srt file Subtitles created!", 6) 
         else:
-            print("error: cannot add subtitles")
-        
+            self.progress_update.emit("error: cannot create srt file Subtitles.", 7)
 
-    def create_srt(self,name_video, result):
+    def create_srt(self,srt_file_name, result):
         self.str_out = ""
         for key in result["segments"]:
             self.str_out += "{}\n{} --> {}\n{}\n\n".format(key["id"]+1, self.convert_ss_to_hmmss(key["start"]),self.convert_ss_to_hmmss(key["end"]),key["text"])
         
-        with open("srt/{}.srt".format(name_video), 'w', encoding="utf-8") as f:
+        with open(srt_file_name, 'w', encoding="utf-8") as f:
             f.write(self.str_out)
 
     def convert_ss_to_hmmss(self, ss):
         return str(datetime.timedelta(seconds=ss))
+
+
 
 # to avoid freezes, I use this QThread as a timer
 class ThreadTimer(QThread):
@@ -69,9 +75,9 @@ class ThreadTimer(QThread):
         while not self.isInterruptionRequested():
             # print(self.controller.sem.available())  
             if self.controller.sem.available() == 0 and self.controller.w_player.is_paused:  
-                print("lock")  
+                # print("lock")  
                 self.controller.sem.acquire(1)
-                print("unlock")  
+                # print("unlock")  
             QThread.sleep(1)
                 
             # MacOS has problem if a external thread updates UI objects
