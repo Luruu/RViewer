@@ -15,6 +15,7 @@ from views import PreferencesView, WhisperView
 
 class MainView(QMainWindow):
     def __init__(self, name_program, controller, player_user_preferences):
+        
         self.controller = controller # used in close_event()
         
         loadbar_css = "css/loadbar_style.css"
@@ -209,6 +210,7 @@ class MainView(QMainWindow):
             self.loadbar.setOrientation(Qt.Vertical)
         else:
             self.loadbar.setOrientation(Qt.Horizontal)
+            
     def closeEvent(self, event):
         self.controller.close_program(event, track_pos=self.speed_slider.value(), load_pos=self.loadbar.value())
 

@@ -1,0 +1,32 @@
+1
+0:00:00 --> 0:00:03.120000
+ going to describe language models.
+
+2
+0:00:03.120000 --> 0:00:09.360000
+ Language models play a very important role
+
+3
+0:00:09.360000 --> 0:00:15.480000
+ in natural language processing, both in the classical view
+
+4
+0:00:15.480000 --> 0:00:18.280000
+ of natural language processing, but also
+
+5
+0:00:18.280000 --> 0:00:22.160000
+ in the modern framework of deep learning.
+
+6
+0:00:22.160000 --> 0:00:25.240000
+ OK, there are some different techniques
+
+7
+0:00:25.240000 --> 0:00:27.920000
+ to develop language models.
+
+8
+0:00:27.920000 --> 0:00:30.920000
+ But today, and today,
+

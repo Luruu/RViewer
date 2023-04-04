@@ -294,17 +294,19 @@ class WhisperView(QDialog):
         self.name_video = ""
         self.setWindowTitle(self.nameprogram + " subtitles")
 
+        self.models = ["tiny", "base", "small"]
+        self.languages = { "en": "english", "zh": "chinese", "de": "german", "es": "spanish", "ru": "russian", "ko": "korean", "fr": "french", "ja": "japanese", "pt": "portuguese", "tr": "turkish", "pl": "polish", "ca": "catalan", "nl": "dutch", "ar": "arabic", "sv": "swedish", "it": "italian", "id": "indonesian", "hi": "hindi", "fi": "finnish", "vi": "vietnamese", "he": "hebrew", "uk": "ukrainian", "el": "greek", "ms": "malay", "cs": "czech", "ro": "romanian", "da": "danish", "hu": "hungarian", "ta": "tamil", "no": "norwegian", "th": "thai", "ur": "urdu", "hr": "croatian", "bg": "bulgarian", "lt": "lithuanian", "la": "latin", "mi": "maori", "ml": "malayalam", "cy": "welsh", "sk": "slovak", "te": "telugu", "fa": "persian", "lv": "latvian", "bn": "bengali", "sr": "serbian", "az": "azerbaijani", "sl": "slovenian", "kn": "kannada", "et": "estonian", "mk": "macedonian", "br": "breton", "eu": "basque", "is": "icelandic", "hy": "armenian", "ne": "nepali", "mn": "mongolian", "bs": "bosnian", "kk": "kazakh", "sq": "albanian", "sw": "swahili", "gl": "galician", "mr": "marathi", "pa": "punjabi", "si": "sinhala", "km": "khmer", "sn": "shona", "yo": "yoruba", "so": "somali", "af": "afrikaans", "oc": "occitan", "ka": "georgian", "be": "belarusian", "tg": "tajik", "sd": "sindhi", "gu": "gujarati", "am": "amharic", "yi": "yiddish", "lo": "lao", "uz": "uzbek", "fo": "faroese", "ht": "haitian creole", "ps": "pashto", "tk": "turkmen", "nn": "nynorsk", "mt": "maltese", "sa": "sanskrit", "lb": "luxembourgish", "my": "myanmar", "bo": "tibetan", "tl": "tagalog", "mg": "malagasy", "as": "assamese", "tt": "tatar", "haw": "hawaiian", "ln": "lingala", "ha": "hausa", "ba": "bashkir", "jw": "javanese", "su": "sundanese",} 
         
         self.setFixedSize(255, 300)
         self.set_widgets()
         self.add_widgets()
 
+    def showEvent(self, event):
+        pass
+
+
     def closeEvent(self, event):
-        self.setEnabled(True)
-        self.setFixedSize(255, 300)
-        self.progressbar.setVisible(False)
-        self.textedit.setVisible(False)
-        self.controller.window.setEnabled(True)
+        self.controller.whisper_view_close()
 
     def import_file(self):
         dlg = QFileDialog()
@@ -326,6 +328,9 @@ class WhisperView(QDialog):
                 print("error {}: cannot add subtitles".format(res))
             
 
+    def get_language_selected(self):
+        return list(self.languages.keys())[list(self.languages.values()).index(self.combobox1.currentText())]
+        
     def set_widgets(self):
         self.layoutt = QFormLayout()
 
@@ -339,19 +344,13 @@ class WhisperView(QDialog):
         self.importbutton.clicked.connect(self.import_file)
 
         
-        
-        # print(list(LANGUAGES.keys())[list(LANGUAGES.values()).index("sundanese")])
-
-        self.models = ["tiny", "base", "small"]
-        self.languages = { "en": "english", "zh": "chinese", "de": "german", "es": "spanish", "ru": "russian", "ko": "korean", "fr": "french", "ja": "japanese", "pt": "portuguese", "tr": "turkish", "pl": "polish", "ca": "catalan", "nl": "dutch", "ar": "arabic", "sv": "swedish", "it": "italian", "id": "indonesian", "hi": "hindi", "fi": "finnish", "vi": "vietnamese", "he": "hebrew", "uk": "ukrainian", "el": "greek", "ms": "malay", "cs": "czech", "ro": "romanian", "da": "danish", "hu": "hungarian", "ta": "tamil", "no": "norwegian", "th": "thai", "ur": "urdu", "hr": "croatian", "bg": "bulgarian", "lt": "lithuanian", "la": "latin", "mi": "maori", "ml": "malayalam", "cy": "welsh", "sk": "slovak", "te": "telugu", "fa": "persian", "lv": "latvian", "bn": "bengali", "sr": "serbian", "az": "azerbaijani", "sl": "slovenian", "kn": "kannada", "et": "estonian", "mk": "macedonian", "br": "breton", "eu": "basque", "is": "icelandic", "hy": "armenian", "ne": "nepali", "mn": "mongolian", "bs": "bosnian", "kk": "kazakh", "sq": "albanian", "sw": "swahili", "gl": "galician", "mr": "marathi", "pa": "punjabi", "si": "sinhala", "km": "khmer", "sn": "shona", "yo": "yoruba", "so": "somali", "af": "afrikaans", "oc": "occitan", "ka": "georgian", "be": "belarusian", "tg": "tajik", "sd": "sindhi", "gu": "gujarati", "am": "amharic", "yi": "yiddish", "lo": "lao", "uz": "uzbek", "fo": "faroese", "ht": "haitian creole", "ps": "pashto", "tk": "turkmen", "nn": "nynorsk", "mt": "maltese", "sa": "sanskrit", "lb": "luxembourgish", "my": "myanmar", "bo": "tibetan", "tl": "tagalog", "mg": "malagasy", "as": "assamese", "tt": "tatar", "haw": "hawaiian", "ln": "lingala", "ha": "hausa", "ba": "bashkir", "jw": "javanese", "su": "sundanese",} 
-        
+        self.combobox1 = QComboBox()
+        self.combobox1.addItems(sorted(self.languages.values()))
+        self.combobox1.setCurrentText("english")
 
         self.combobox2 = QComboBox()
-        self.combobox2.addItems(self.languages)
-
-    
-        self.combobox3 = QComboBox()
-        self.combobox3.addItems(self.models)
+        self.combobox2.addItems(self.models)
+        self.combobox2.setCurrentText("base")
 
 
         self.createbutton = QPushButton()
@@ -362,21 +361,15 @@ class WhisperView(QDialog):
         # self.textedit.setVisible(False)
         self.textedit.setReadOnly(True)
         self.textedit.setFixedHeight(80)
-
-        self.progressbar = QProgressBar()
-        self.progressbar.setMinimum(0)
-        self.progressbar.setMaximum(6)
-        self.progressbar.setVisible(False)
+        
     def add_widgets(self):
         self.layoutt.setSpacing(10)
         self.layoutt.addRow(self.importbutton)
         self.layoutt.addRow(QLabel(""))
         self.layoutt.addRow(self.label1)
-        self.layoutt.addRow(QLabel("select Subtitle Language:"), self.combobox2)
-        self.layoutt.addRow(QLabel("select Whisper Model:"), self.combobox3)
-        # self.layoutt.addRow(QLabel(""))
+        self.layoutt.addRow(QLabel("select Audio Language:"), self.combobox1)
+        self.layoutt.addRow(QLabel("select Whisper Model:"), self.combobox2)
         self.layoutt.addRow(self.textedit)
-        self.layoutt.addRow(self.progressbar) 
         self.layoutt.addRow(self.createbutton)
       
         self.setLayout(self.layoutt)

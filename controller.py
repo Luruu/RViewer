@@ -6,8 +6,6 @@ from mainview import MainView
 from views import PlayerView
 from model import PlayerModel, VideoModel
 
-from threads import Whisper, ThreadTimer
-
 
 import sys
 import time
@@ -38,6 +36,7 @@ class Controller():
         self.sem_player.acquire(1)
         self.m_player = PlayerModel()
         self.window = MainView(self.program_name, self, self.m_player.player_preferences)
+        self.window.setEnabled(False)
         self.anchorVLCtoWindow(self.w_player.get_istance_vlc_player(), self.window.videoframe.winId())
 
         
@@ -50,8 +49,6 @@ class Controller():
         self.thread = ThreadTimer(self)
 
         
-
-        
         self.w_player.parse_media()
         self.window.show() 
         self.m_video.get_videoinfo_byvideo(self.w_player)
@@ -61,10 +58,11 @@ class Controller():
         if sys.platform == "darwin":
             self.thread.update_gui.connect(self.update_gui)
         
-        self.whisper = Whisper(self, self.m_video.name_video, sys.argv[1])
+        self.whisper = None
         # self.window.whisper_window.name_video = self.m_video.name_video
         self.set_view_connections()
         self.thread.start()
+        self.window.setEnabled(True)
         sys.exit(self.window.app.exec())
     
 
@@ -188,46 +186,74 @@ class Controller():
             self.window.show_whisper_window()
         else:
             print("else handle_subtitle error!!")
+
+    def handle_stderr(self):
+        data = self.whisper.readAllStandardError()
+        stderr = bytes(data).decode("utf8")
+        # Extract progress if it is in the data.
+        self.window.whisper_window.textedit.append(stderr)
+
+    def handle_stdout(self):
+        data = self.whisper.readAllStandardOutput()
+        stdout = bytes(data).decode("utf8")
+        self.window.whisper_window.textedit.append(stdout)
+
+    def handle_state(self, state):
+        states = {
+            QProcess.NotRunning: 'Not running',
+            QProcess.Starting: 'Starting',
+            QProcess.Running: 'Running',
+        }
+        state_name = states[state]
+        self.window.whisper_window.textedit.append(f"State changed: {state_name}")
+
+    def process_finished(self):
+        self.window.whisper_window.setEnabled(True)
+        self.window.setEnabled(True)
+        srt_file_name = os.path.join('srt', "{}.srt".format(self.m_video.name_video))
+        # if process is completed, it will have created the srt file.
+        if os.path.exists(srt_file_name): 
+            self.window.whisper_window.textedit.append("Process completed! :)")
+            if self.set_subtitles_by_file(srt_file_name):
+                self.window.whisper_window.textedit.append("{}: srt file Subtitles have been set up correctly!".format(time.strftime("%H:%M:%S", time.localtime()))) 
+            else:
+                self.window.whisper_window.textedit.append("{}: error! cannot create srt file Subtitles.".format(time.strftime("%H:%M:%S", time.localtime())))
+        else: # if process is interrupted, it will not have created the srt file.
+            self.window.whisper_window.textedit.append("Process interrupted! :(")
+
+        self.whisper = None
             
     def do_subtitles(self):
-        self.pause()
-        self.whisper.lang_sub = self.window.whisper_window.combobox2.currentText()
-        self.whisper.model = self.window.whisper_window.combobox3.currentText()
-        
-        self.whisper.start() # this method create subtitles and show them!
-
-        self.buttonsub_operation = 0
-        self.window.btnSubtitle.setText("hide subtitles")
-
-    def update_progress_whisper(self,message,value):
-        if value == 0:
-            self.window.whisper_window.progressbar.setVisible(True)
-            # self.window.whisper_window.textedit.setVisible(True)
-            self.window.whisper_window.setEnabled(False)
-            self.window.whisper_window.setFixedSize(255, 360)
-        
-            self.window.setEnabled(False)
-            return
-
-        self.window.whisper_window.progressbar.setValue(value if value <= 6 else 0) # 7 is used for error
-        self.window.whisper_window.textedit.append("{}\n".format(message))
-
-        if value == 6 or value == 7:
+        self.pause() # pause video 
+        if self.whisper is None:
             self.window.whisper_window.setEnabled(True)
-            self.window.whisper_window.setFixedSize(255, 300)
-            self.thread.sleep(2)
-            self.window.whisper_window.progressbar.setVisible(False)
             self.window.setEnabled(True)
+            self.whisper = QProcess()
+            self.whisper.readyReadStandardOutput.connect(self.handle_stdout)
+            self.whisper.readyReadStandardError.connect(self.handle_stderr)
+            self.whisper.stateChanged.connect(self.handle_state)
+            self.whisper.finished.connect(self.process_finished)
+            print(self.window.whisper_window.get_language_selected(),self.window.whisper_window.combobox2.currentText())
+            f = open("python_use", "r")
+            self.whisper.start(f.read(), ["subtitle.py", self.m_video.name_video, sys.argv[1], self.window.whisper_window.get_language_selected(),self.window.whisper_window.combobox2.currentText()])
+        
 
-            self.window.whisper_window.close()
+    def whisper_view_close(self):
+        if self.whisper is not None:
+            self.whisper.close()
+
+        self.window.setEnabled(True)
+
+        if self.w_player.get_sub_count() > 0:
+            self.buttonsub_operation = 0
+            self.window.btnSubtitle.setText("hide subtitles")
+
+
+    
+
 
     def set_subtitles_by_file(self, srt):
-        if self.w_player.set_subtitle(srt) == 1:
-            print("subtitles added correctly")
-            return True
-        else:
-            print("error: cannot add subtitles")
-            return False
+        return self.w_player.set_subtitle(srt) == 1
 
     def update_gui(self):
         if self.m_video.video_info["Artist"] is None:
@@ -262,7 +288,7 @@ class Controller():
     
     def slider_released_behavior(self):
         self.w_player.set_time(self.window.loadbar.value())
-        time.sleep(0.1)
+        time.sleep(0.2)
         self.play()
 
     def set_view_connections(self):
@@ -279,10 +305,6 @@ class Controller():
         self.window.volume_slider.valueChanged.connect(lambda: self.w_player.set_volume(self.window.volume_slider.value()))
 
         self.window.tool_bar2.orientationChanged.connect(self.window.set_loadbar2orientation)
-
-
-
-        self.whisper.progress_update.connect(self.update_progress_whisper)
 
         self.window.whisper_window.createbutton.clicked.connect(self.do_subtitles)
 
@@ -309,7 +331,37 @@ class Controller():
         
 
 
+# to avoid freezes, I use this QThread as a timer
+class ThreadTimer(QThread):
+    update_gui = Signal()
+    def __init__(self,controller):
+        QThread.__init__(self)
+        self.controller = controller
+        
+    def run(self):
+        while not self.isInterruptionRequested():
+            # print(self.controller.sem.available())  
+            if self.controller.sem.available() == 0 and self.controller.w_player.is_paused:  
+                # print("lock")  
+                self.controller.sem.acquire(1)
+                # print("unlock")  
+            QThread.sleep(1)
+                
+            # MacOS has problem if a external thread updates UI objects
+            if sys.platform == "darwin":
+                self.update_gui.emit() 
+            else:
+                self.controller.update_gui()
 
+            if not self.controller.w_player.is_playing(): # if is paused or stopped
+                self.controller.window.btnPlayPause.setText(">")
+                if not self.controller.w_player.is_paused: # if is stopped
+                    self.controller.w_player.stop()
+                    if self.controller.m_player.player_preferences["loop_video"]:
+                        self.controller.window.btnPlayPause.setEnabled(False)
+                        QThread.sleep(3)
+                        self.controller.play()
+                        self.controller.window.btnPlayPause.setEnabled(True)
     
                             
             
