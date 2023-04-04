@@ -301,10 +301,6 @@ class WhisperView(QDialog):
         self.set_widgets()
         self.add_widgets()
 
-    def showEvent(self, event):
-        pass
-
-
     def closeEvent(self, event):
         self.controller.whisper_view_close()
 
