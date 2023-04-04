@@ -45,6 +45,7 @@ class Controller():
         self.sem.acquire(1)
         self.m_video = VideoModel(self.m_player.player_preferences)
         
+        
 
         self.thread = ThreadTimer(self)
 
@@ -210,6 +211,7 @@ class Controller():
     def process_finished(self):
         self.window.whisper_window.setEnabled(True)
         self.window.setEnabled(True)
+        
         srt_file_name = os.path.join('srt', "{}.srt".format(self.m_video.name_video))
         # if process is completed, it will have created the srt file.
         if os.path.exists(srt_file_name): 
@@ -222,7 +224,8 @@ class Controller():
             self.window.whisper_window.textedit.append("Process interrupted! :(")
 
         self.whisper = None
-            
+
+
     def do_subtitles(self):
         self.pause() # pause video 
         if self.whisper is None:
@@ -234,9 +237,20 @@ class Controller():
             self.whisper.stateChanged.connect(self.handle_state)
             self.whisper.finished.connect(self.process_finished)
             print(self.window.whisper_window.get_language_selected(),self.window.whisper_window.combobox2.currentText())
-            f = open("python_use", "r")
-            self.whisper.start(f.read(), ["subtitle.py", self.m_video.name_video, sys.argv[1], self.window.whisper_window.get_language_selected(),self.window.whisper_window.combobox2.currentText()])
-        
+            self.pip = QProcess() 
+            
+            print(os.environ['VIRTUAL_ENV'])
+        f = open("python_use", "r")
+        if sys.platform == "win32":
+            python = os.path.join(os.environ['VIRTUAL_ENV'], "Scripts", "python.exe")
+        else:
+            python = os.path.join(os.environ['VIRTUAL_ENV'], "bin", "python")
+
+        print(python)
+        self.whisper.start(python, ["subtitle.py", self.m_video.name_video, sys.argv[1], self.window.whisper_window.get_language_selected(),self.window.whisper_window.combobox2.currentText()])
+            
+
+            
 
     def whisper_view_close(self):
         if self.whisper is not None:
@@ -247,8 +261,6 @@ class Controller():
         if self.w_player.get_sub_count() > 0:
             self.buttonsub_operation = 0
             self.window.btnSubtitle.setText("hide subtitles")
-
-
     
 
 
@@ -359,7 +371,7 @@ class ThreadTimer(QThread):
                     self.controller.w_player.stop()
                     if self.controller.m_player.player_preferences["loop_video"]:
                         self.controller.window.btnPlayPause.setEnabled(False)
-                        QThread.sleep(3)
+                        QThread.sleep(2)
                         self.controller.play()
                         self.controller.window.btnPlayPause.setEnabled(True)
     

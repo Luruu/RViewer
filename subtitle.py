@@ -7,7 +7,6 @@ import datetime
 import sys
 import whisper 
 import torch
-
 class Whisper():
     
     def __init__(self, name_video , path_video, lang_sub, model_selected):
@@ -21,6 +20,8 @@ class Whisper():
             
             
     def run(self):
+        
+
         ''' imports are here because too heavy to import at startup'''
         print("starting Whisper..") 
         
