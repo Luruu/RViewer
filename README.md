@@ -40,6 +40,8 @@ This helped me: https://github.com/pytorch/pytorch/issues/30664#issuecomment-757
 8. vocal commands
 9. Stream video with a friend
 
+## credits
+<a href="https://www.flaticon.com/free-icons/music-and-multimedia" title="music-and-multimedia icons">Program Icon created by Azland Studio - Flaticon</a>
 
 ## Outputs
 <img align="center" src="img/mac_screen.png" width=780px> 
@@ -47,5 +49,4 @@ This helped me: https://github.com/pytorch/pytorch/issues/30664#issuecomment-757
 
 <img align="left" src="img/window_screen_white.png" width=760px>  
 
-## credits
-<a href="https://www.flaticon.com/free-icons/music-and-multimedia" title="music-and-multimedia icons">Program Icon created by Azland Studio - Flaticon</a>
+
