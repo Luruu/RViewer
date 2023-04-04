@@ -44,7 +44,7 @@ This helped me: https://github.com/pytorch/pytorch/issues/30664#issuecomment-757
 <a href="https://www.flaticon.com/free-icons/music-and-multimedia" title="music-and-multimedia icons">Program Icon created by Azland Studio - Flaticon</a>
 
 ## Outputs
-<img align="center" src="img/mac_screen.png" width=675px> <img align="right" src="img/mac_preferences.png" width=300px>
+<img align="center" src="img/mac_screen.png" width=675px> 
+<img align="left" src="img/mac_preferences.png" width=350px> <img align="right" src="img/mac_whisper.png" width=350px>
 
-
-<img align="left" src="img/window_screen_white.png" width=650px>  <img align="right" src="img/mac_whisper.png" width=300px>
+<img align="left" src="img/window_screen_white.png" width=650px>  
