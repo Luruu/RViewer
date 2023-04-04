@@ -24,7 +24,7 @@ Rviewer is a VLC media player that can generate subtitle using OpenAI Whisper Mo
 ## tips
 - (Subtitle): use CUDA if you have a NVIDIA GPU: it will be faster. Check if torch.cuda is available with: `test_torch.py`.
 This helped me: https://github.com/pytorch/pytorch/issues/30664#issuecomment-757431613
-- change CSS files if you want a different styles for bars
+- change CSS files if you want a different styles for bars.
 
 ## solutions
 - [MacOS]: if you get error `SSL: CERTIFICATE_VERIFY_FAILED` try to install `certifi` or upgrade it.
@@ -42,3 +42,9 @@ This helped me: https://github.com/pytorch/pytorch/issues/30664#issuecomment-757
 
 ## credits
 <a href="https://www.flaticon.com/free-icons/music-and-multimedia" title="music-and-multimedia icons">Program Icon created by Azland Studio - Flaticon</a>
+
+## Outputs
+<img align="center" src="img/mac_screen.png" width=675px> <img align="right" src="img/mac_preferences.png" width=300px>
+
+
+<img align="left" src="img/window_screen_white.png" width=650px>  <img align="right" src="img/mac_whisper.png" width=300px>
