@@ -40,11 +40,12 @@ This helped me: https://github.com/pytorch/pytorch/issues/30664#issuecomment-757
 8. vocal commands
 9. Stream video with a friend
 
-## credits
-<a href="https://www.flaticon.com/free-icons/music-and-multimedia" title="music-and-multimedia icons">Program Icon created by Azland Studio - Flaticon</a>
 
 ## Outputs
-<img align="center" src="img/mac_screen.png" width=720px> 
+<img align="center" src="img/mac_screen.png" width=780px> 
 <img align="left" src="img/mac_preferences.png" width=350px> <img align="right" src="img/mac_whisper.png" width=350px>
 
-<img align="left" src="img/window_screen_white.png" width=700px>  
+<img align="left" src="img/window_screen_white.png" width=760px>  
+
+## credits
+<a href="https://www.flaticon.com/free-icons/music-and-multimedia" title="music-and-multimedia icons">Program Icon created by Azland Studio - Flaticon</a>
