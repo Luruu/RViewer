@@ -34,6 +34,7 @@ class MainView(QMainWindow):
         self.app = QApplication(sys.argv)
         self.app.setApplicationName(name_program)
         self.app.setApplicationVersion("1.0")
+        self.app.setWindowIcon(QIcon("icon.png"))
         
         self.app.setStyle('Fusion')
         super().__init__()

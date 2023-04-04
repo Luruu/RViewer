@@ -105,6 +105,8 @@ class PlayerModel():
             "playpause_shortkey" : "Ctrl+F",
             "forward_shortkey" : "Ctrl+G",
             "windows_dark_mode": sys.platform == "win32",
+            "whisper_language": "english",
+            "whisper_model": "base",
             "x" : 0,
             "y": 0,
             "dim": 0,
@@ -121,7 +123,7 @@ class PlayerModel():
         with open(self.file_player_preferences, 'r') as f: 
             self.player_preferences = json.load(f) #update player preferences values with player_preferences.json 
         
-    def save_player_preferences(self,back=None,forward=None,track_pos=None,loop=None,pick=None,save=None,show=None,x=None,y=None,dim=None,hei=None, back_short=None, plpau_short=None, forwd_short=None,darkmodewin=None):
+    def save_player_preferences(self,back=None,forward=None,track_pos=None,loop=None,pick=None,save=None,show=None,x=None,y=None,dim=None,hei=None, back_short=None, plpau_short=None, forwd_short=None,darkmodewin=None, whisper_len=None, whisper_model=None):
         if back is not None:
             self.player_preferences["back_value"] = back
         if forward is not None:
@@ -154,6 +156,12 @@ class PlayerModel():
 
         if darkmodewin is not None:
             self.player_preferences["windows_dark_mode"] = darkmodewin
+
+        if whisper_len is not None:
+            self.player_preferences["whisper_language"] = whisper_len
+        
+        if whisper_model is not None:
+            self.player_preferences["whisper_model"] = whisper_model
 
         # note: all key-values are salved into file. i.e: if back is None, self.player_preferences["back_value"] value is saved into file. If it is not none, back value instead is saved into file!
         self.save_preferences_in_file(self.file_player_preferences, self.player_preferences)

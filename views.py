@@ -342,12 +342,9 @@ class WhisperView(QDialog):
         
         self.combobox1 = QComboBox()
         self.combobox1.addItems(sorted(self.languages.values()))
-        self.combobox1.setCurrentText("english")
 
         self.combobox2 = QComboBox()
         self.combobox2.addItems(self.models)
-        self.combobox2.setCurrentText("base")
-
 
         self.createbutton = QPushButton()
         self.createbutton.setText("create subtitles")

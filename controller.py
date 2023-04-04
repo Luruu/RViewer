@@ -21,10 +21,10 @@ class Controller():
 
         ''' source_path is for testing only '''
         source_path = ["test/test_sub.mkv", "test/test_without_subs.mp4", "test/input.mkv", "test/output.mkv", "test/B.mp3", "test/audio.mp3", "test/audio_short.wav",
-                       "test/video2.mkv", "test/video.mp4", "test/sample.mp4"]
+                       "test/video2.mkv", "test/video.mp4", "test/sample.mp4", "test/1.mkv"]
        
 
-        sys.argv += [source_path[7]]
+        sys.argv += [source_path[10]]
 
         if not os.path.exists(sys.argv[1]):
             print("error: video file does not exists.")
@@ -36,6 +36,8 @@ class Controller():
         self.sem_player.acquire(1)
         self.m_player = PlayerModel()
         self.window = MainView(self.program_name, self, self.m_player.player_preferences)
+        self.window.whisper_window.combobox1.setCurrentText(self.m_player.player_preferences["whisper_language"])
+        self.window.whisper_window.combobox2.setCurrentText(self.m_player.player_preferences["whisper_model"])
         self.window.setEnabled(False)
         self.anchorVLCtoWindow(self.w_player.get_istance_vlc_player(), self.window.videoframe.winId())
 
@@ -64,7 +66,9 @@ class Controller():
         self.set_view_connections()
         self.thread.start()
         self.window.setEnabled(True)
+    
         sys.exit(self.window.app.exec())
+        
     
 
     def play(self):
@@ -229,8 +233,8 @@ class Controller():
     def do_subtitles(self):
         self.pause() # pause video 
         if self.whisper is None:
-            self.window.whisper_window.setEnabled(True)
-            self.window.setEnabled(True)
+            self.window.whisper_window.setEnabled(False)
+            self.window.setEnabled(False)
             self.whisper = QProcess()
             self.whisper.readyReadStandardOutput.connect(self.handle_stdout)
             self.whisper.readyReadStandardError.connect(self.handle_stderr)
@@ -336,7 +340,7 @@ class Controller():
         
         self.m_video.save_video_preferences(track_pos=track_pos, load_pos=load_pos, vol= self.w_player.get_volume())
         geometry = self.window.geometry()
-        self.m_player.save_player_preferences(x=geometry.x(), y=geometry.y(), dim=geometry.width(), hei=geometry.height())
+        self.m_player.save_player_preferences(x=geometry.x(), y=geometry.y(), dim=geometry.width(), hei=geometry.height(), whisper_len=self.window.whisper_window.combobox1.currentText(), whisper_model=self.window.whisper_window.combobox2.currentText())
         
 
 
@@ -368,7 +372,7 @@ class ThreadTimer(QThread):
                     self.controller.w_player.stop()
                     if self.controller.m_player.player_preferences["loop_video"]:
                         self.controller.window.btnPlayPause.setEnabled(False)
-                        QThread.sleep(2)
+                        QThread.sleep(3)
                         self.controller.play()
                         self.controller.window.btnPlayPause.setEnabled(True)
     
