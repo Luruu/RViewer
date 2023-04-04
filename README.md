@@ -4,7 +4,7 @@ Rviewer is a VLC media player that can generate subtitle using OpenAI Whisper Mo
 
 ## prerequisites:
 - python3 
-- <a href="https://www.videolan.org/vlc/index.it.html">VLC program</a></li> installed on your machine
+- <a href="https://www.videolan.org/vlc/index.it.html">VLC program</a></li>
 - [Optional] (to generate subtitles): <a href="https://ffmpeg.org/download.html">ffmpeg</a></li>ffmpeg program 
 
 
