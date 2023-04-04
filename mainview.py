@@ -7,6 +7,7 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 import sys
+import os
 
 from views import PreferencesView, WhisperView
 
@@ -34,7 +35,8 @@ class MainView(QMainWindow):
         self.app = QApplication(sys.argv)
         self.app.setApplicationName(name_program)
         self.app.setApplicationVersion("1.0")
-        self.app.setWindowIcon(QIcon("icon.png"))
+        path_icon = os.path.join('img', "icon.png")
+        self.app.setWindowIcon(QIcon(path_icon))
         
         self.app.setStyle('Fusion')
         super().__init__()

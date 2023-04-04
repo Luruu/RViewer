@@ -27,9 +27,9 @@ This helped me: https://github.com/pytorch/pytorch/issues/30664#issuecomment-757
 - change CSS files if you want a different styles for bars
 
 ## solutions
-- [MacOS]: if you get error `SSL: CERTIFICATE_VERIFY_FAILED` try to install certifi or upgrade it.
+- [MacOS]: if you get error `SSL: CERTIFICATE_VERIFY_FAILED` try to install `certifi` or upgrade it.
 
-### possible future updates
+## possible future updates
 1. handle more subtitles
 2. create a window for subtitles
 3. add css for more gui objects

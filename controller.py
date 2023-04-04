@@ -21,10 +21,10 @@ class Controller():
 
         ''' source_path is for testing only '''
         source_path = ["test/test_sub.mkv", "test/test_without_subs.mp4", "test/input.mkv", "test/output.mkv", "test/B.mp3", "test/audio.mp3", "test/audio_short.wav",
-                       "test/video2.mkv", "test/video.mp4", "test/sample.mp4", "test/1.mkv"]
+                       "test/video2.mkv", "test/video.mp4", "test/sample.mp4", "test/1.mkv", "test/video_test.mp4"]
        
-
-        sys.argv += [source_path[10]]
+        
+        sys.argv += [source_path[11]]
 
         if not os.path.exists(sys.argv[1]):
             print("error: video file does not exists.")
