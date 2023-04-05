@@ -2,8 +2,11 @@
     controller
 '''
 
-from mainview import MainView
+
 from views import PlayerView
+
+from mainview import MainView
+
 from model import PlayerModel, VideoModel
 
 
@@ -23,8 +26,8 @@ class Controller():
         source_path = ["test/test_sub.mkv", "test/test_without_subs.mp4", "test/input.mkv", "test/output.mkv", "test/B.mp3", "test/audio.mp3", "test/audio_short.wav",
                        "test/video2.mkv", "test/video.mp4", "test/sample.mp4", "test/1.mkv", "test/video_test.mp4"]
        
-        
-        sys.argv += [source_path[11]]
+
+        sys.argv += [source_path[4]]
 
         if not os.path.exists(sys.argv[1]):
             print("error: video file does not exists.")
@@ -47,7 +50,6 @@ class Controller():
         self.sem.acquire(1)
         self.m_video = VideoModel(self.m_player.player_preferences)
         
-        
 
         self.thread = ThreadTimer(self)
 
@@ -62,7 +64,7 @@ class Controller():
             self.thread.update_gui.connect(self.update_gui)
         
         self.whisper = None
-        # self.window.whisper_window.name_video = self.m_video.name_video
+        self.window.whisper_window.name_video = self.m_video.name_video
         self.set_view_connections()
         self.thread.start()
         self.window.setEnabled(True)
@@ -241,14 +243,16 @@ class Controller():
             self.whisper.stateChanged.connect(self.handle_state)
             self.whisper.finished.connect(self.process_finished)
             
-        '''
+    
+        # os.environ['VIRTUAL_ENV']
         if sys.platform == "win32":
-            python = os.path.join(os.environ['VIRTUAL_ENV'], "Scripts", "python.exe")
+            python = os.path.join("env", "Scripts", "python.exe")
         else:
-            python = os.path.join(os.environ['VIRTUAL_ENV'], "bin", "python")
-        '''  
+            python = os.path.join("env", "bin", "python")
+         
         
-        self.whisper.start(sys.executable, ["subtitle.py", self.m_video.name_video, sys.argv[1], self.window.whisper_window.get_language_selected(),self.window.whisper_window.combobox2.currentText()])
+    
+        self.whisper.start(python, ["subtitle.py", self.m_video.name_video, sys.argv[1], self.window.whisper_window.get_language_selected(),self.window.whisper_window.combobox2.currentText()])
             
 
             

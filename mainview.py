@@ -104,6 +104,7 @@ class MainView(QMainWindow):
         self.btnPlayPause.setText("||")   
         self.btnPlayPause.setShortcut(player_user_preferences["playpause_shortkey"])  
         
+        
 
         self.btnForward = QPushButton(self)
         self.btnForward.setStyleSheet('QPushButton {background-color: silver; color: black;}')
@@ -206,6 +207,7 @@ class MainView(QMainWindow):
         self.tool_bar3.addWidget(self.spacer3)
         self.tool_bar3.addWidget(QLabel("volume"))
         self.tool_bar3.addWidget(self.volume_slider)     
+
         
     
     def set_loadbar2orientation(self):

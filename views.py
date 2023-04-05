@@ -312,7 +312,7 @@ class WhisperView(QDialog):
 		
         if dlg.exec_():
             filenames = dlg.selectedFiles()
-            new_name = os.path.join(sys.path[0], 'srt', "{}.srt".format(self.name_video)) 
+            new_name = os.path.join('srt', "{}.srt".format(self.name_video)) 
             shutil.copyfile(filenames[0],new_name)
             
             res = self.controller.w_player.set_subtitle(new_name)

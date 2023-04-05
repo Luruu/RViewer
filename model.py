@@ -41,6 +41,7 @@ class VideoModel():
             json.dump(dict, f)
 
     def load_videopreferences(self):
+        # define video name into json and srt
         self.name_video = self.video_info["Title"] + str(self.video_info["Duration"])
         
         #if file does not exists I have to create it and to set default values for a single video
@@ -102,7 +103,7 @@ class PlayerModel():
             "track_video" : True,
             "show_subtitle_if_available" : True,
             "back_shortkey" : "Ctrl+D",
-            "playpause_shortkey" : "Ctrl+F",
+            "playpause_shortkey" : "Space",
             "forward_shortkey" : "Ctrl+G",
             "windows_dark_mode": sys.platform == "win32",
             "whisper_language": "english",
