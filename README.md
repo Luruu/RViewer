@@ -13,9 +13,9 @@ RViewer is a VLC media player that can generate subtitle using OpenAI Whisper Mo
 - [Optional] (to generate subtitles): ffmpeg-python, openai-whisper, torch
 
 
-## hardware requirements (to generate subtitles):
+## hardware/software requirements (to generate subtitles):
 - Windows/MacOS/Linux
-- at least 2GB free space for libraries/models
+- at least 2GB free space for basic libraries / at least 5 GB free space for libraries/models
 - at least 1GB VRAM for OpenAI Tiny Model, 2GB VRAM for Small Model
 
 ## setup
@@ -24,7 +24,7 @@ RViewer is a VLC media player that can generate subtitle using OpenAI Whisper Mo
 ## tips
 - (Subtitle): use CUDA if you have a NVIDIA GPU: it will be faster. Check if torch.cuda is available with: `test_torch.py`.
 This helped me: https://github.com/pytorch/pytorch/issues/30664#issuecomment-757431613
-- change CSS files if you want a different bar styles
+- change CSS files if you want different bar styles
 
 ## solutions
 - [MacOS]: if you get error `SSL: CERTIFICATE_VERIFY_FAILED` try to install `certifi` or upgrade it.
@@ -44,9 +44,9 @@ This helped me: https://github.com/pytorch/pytorch/issues/30664#issuecomment-757
 <a href="https://www.flaticon.com/free-icons/music-and-multimedia" title="music-and-multimedia icons">Program Icon created by Azland Studio - Flaticon</a>
 
 ## Outputs
-<img align="center" src="img/mac_screen.png" width=780px> 
+<img align="center" src="img/mac_screen.png" width=800px> 
 <img align="left" src="img/mac_preferences.png" width=350px> <img align="right" src="img/mac_whisper.png" width=350px>
 
-<img align="left" src="img/window_screen_white.png" width=760px>  
+<img align="left" src="img/window_screen_white.png" width=780px>  
 
 
