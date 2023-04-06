@@ -15,7 +15,7 @@ RViewer is a VLC media player that can generate subtitle using OpenAI Whisper Mo
 
 ## hardware/software requirements (to generate subtitles):
 - Windows/MacOS/Linux
-- at least 2GB free space for basic libraries / at least 5 GB free space for libraries/models
+- at least 600MB free space for mandatory libraries / at least 5 GB free space for all libraries/models
 - at least 1GB VRAM for OpenAI Tiny Model, 2GB VRAM for Small Model
 
 ## setup
