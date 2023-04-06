@@ -1,7 +1,6 @@
 # RViewer
 RViewer is a VLC media player that can generate subtitle using OpenAI Whisper Model. It's a personal project that I developed because I wanted to create a video player that was comfortable to use for many hours a day for video lessons (or in general to analyze video).
 
-
 ## prerequisites:
 - python3 
 - <a href="https://www.videolan.org/vlc/index.it.html">VLC program</a></li>
@@ -43,10 +42,9 @@ This helped me: https://github.com/pytorch/pytorch/issues/30664#issuecomment-757
 ## credits
 <a href="https://www.flaticon.com/free-icons/music-and-multimedia" title="music-and-multimedia icons">Program Icon created by Azland Studio - Flaticon</a>
 
-## Outputs
-<img align="center" src="img/mac_screen.png" width=800px> 
-<img align="left" src="img/mac_preferences.png" width=350px> <img align="right" src="img/mac_whisper.png" width=350px>
 
-<img align="left" src="img/window_screen_white.png" width=780px>  
+<img align="center" src="img/mac_screen.png" width=100%> 
+<img align="left" src="img/mac_preferences.png" width=40%> <img align="right" src="img/mac_whisper.png" width=40%>
+<img align="left" src="img/window_screen_white.png" width=100%>  
 
 
