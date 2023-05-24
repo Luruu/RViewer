@@ -19,7 +19,7 @@ PySide6-Addons==6.4.3
 PySide6-Essentials==6.4.3
 python-vlc==3.0.18121
 regex==2023.3.23
-requests==2.28.2
+requests==2.31.0
 shiboken6==6.4.3
 sympy==1.11.1
 tiktoken==0.3.1
