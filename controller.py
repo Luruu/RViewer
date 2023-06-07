@@ -18,27 +18,53 @@ from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
 class Controller():
+   
+    def get_original_path(self):
+        # path of main .py or .exe when converted with pyinstaller
+        if getattr(sys, 'frozen', False):
+            script_path = os.path.dirname(sys.executable)
+        else:
+            script_path = os.path.dirname(
+                os.path.abspath(sys.modules['__main__'].__file__)
+            )
+        return script_path
+
+    def get_MEI_path(self):
+        # path of your data in same folder of main .py or added using --add-data
+        if getattr(sys, 'frozen', False):
+            data_folder_path = sys._MEIPASS
+        else:
+            data_folder_path = os.path.dirname(
+                os.path.abspath(sys.modules['__main__'].__file__)
+            )
+        return data_folder_path
+
+   
+
 
     def __init__(self):
+        
         self.program_name = "RV"
 
-        ''' source_path is for testing only '''
+        self.program_path = self.get_original_path() # temp folder -> os.path.dirname(os.path.abspath(__file__))
+        
+        ''' source_path is for testing only
         source_path = ["test/test_sub.mkv", "test/test_without_subs.mp4", "test/input.mkv", "test/output.mkv", "test/B.mp3", "test/audio.mp3", "test/audio_short.wav",
                        "test/video2.mkv", "test/video.mp4", "test/sample.mp4", "test/1.mkv", "test/video_test.mp4"]
        
+        
+        
+        sys.argv += [source_path[11]]
+        '''
 
-        sys.argv += [source_path[4]]
-
-        if not os.path.exists(sys.argv[1]):
-            print("error: video file does not exists.")
-            sys.exit()
+        self.check_video_path()
 
         self.sem_player = QSemaphore(0)
         self.w_player = PlayerView(self)
         self.w_player.start()
         self.sem_player.acquire(1)
-        self.m_player = PlayerModel()
-        self.window = MainView(self.program_name, self, self.m_player.player_preferences)
+        self.m_player = PlayerModel(self.program_path)
+        self.window = MainView(self.program_name, self.program_path, self, self.m_player.player_preferences)
         self.window.whisper_window.combobox1.setCurrentText(self.m_player.player_preferences["whisper_language"])
         self.window.whisper_window.combobox2.setCurrentText(self.m_player.player_preferences["whisper_model"])
         self.window.setEnabled(False)
@@ -48,7 +74,7 @@ class Controller():
         self.sem = QSemaphore(0)
         self.play_pause()
         self.sem.acquire(1)
-        self.m_video = VideoModel(self.m_player.player_preferences)
+        self.m_video = VideoModel(self.m_player.player_preferences,self.program_path)
         
 
         self.thread = ThreadTimer(self)
@@ -70,8 +96,26 @@ class Controller():
         self.window.setEnabled(True)
     
         sys.exit(self.window.app.exec())
-        
     
+    '''
+    Maybe not useful
+    def get_correct_path(self, relative_path):
+        try:
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+
+        return os.path.join(base_path, relative_path)
+    '''
+
+    def check_video_path(self):
+        if len(sys.argv) > 1: # if argv has an input
+            if not os.path.exists(sys.argv[1]):
+                print("RV ERROR: video file does not exists.")
+                sys.exit()
+        else:
+            print("RV ERROR: choose a video to open RV program.")
+            sys.exit()
 
     def play(self):
         self.w_player.play()

@@ -10,7 +10,7 @@ import os.path
 
 
 class VideoModel():
-    def __init__(self, player_preferences):
+    def __init__(self, player_preferences, path_program):
         self.default_video_preferences = {
             "track_value" : player_preferences["track_value"],
             "load_pos": 0,
@@ -20,7 +20,7 @@ class VideoModel():
 
         self.video_preferences = {}
 
-        self.file_video_preferences = "video_preferences.json"
+        self.file_video_preferences = os.path.join(path_program, "preferences", "video_preferences.json") 
         self.name_video = "" # this is the name into json file
 
         self.video_info = {} #Title, Artist, Duration, Rate, etc.
@@ -93,7 +93,7 @@ class VideoModel():
 
    
 class PlayerModel():
-    def __init__(self):
+    def __init__(self, path_program):
         self.default_player_preferences = {
             "back_value" : 10,
             "forward_value" : 30,
@@ -116,7 +116,9 @@ class PlayerModel():
 
         self.player_preferences = {}
 
-        self.file_player_preferences = "player_preferences.json"
+        self.file_player_preferences = os.path.join(path_program, "preferences", "player_preferences.json") 
+
+        
 
         if not os.path.isfile(self.file_player_preferences): #If player file does not exists
             self.save_preferences_in_file(self.file_player_preferences, self.default_player_preferences) #create a file with default values

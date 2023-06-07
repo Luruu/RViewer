@@ -15,12 +15,17 @@ from views import PreferencesView, WhisperView
 
 
 class MainView(QMainWindow):
-    def __init__(self, name_program, controller, player_user_preferences):
+    def __init__(self, name_program, path_program, controller, player_user_preferences):
         
         self.controller = controller # used in close_event()
+
+        dir_css_name = "styles"
         
-        loadbar_css = "css/loadbar_style.css"
-        sliderbar_css = "css/speed_slider.css"
+        loadbar_css = os.path.join(path_program, dir_css_name, "loadbar_style.css") 
+       
+        sliderbar_css = os.path.join(path_program, dir_css_name, "speed_slider.css")
+
+        print(loadbar_css)
         
         with open(loadbar_css, 'r') as f:
             self.loadbar_style = f.read()
@@ -35,7 +40,7 @@ class MainView(QMainWindow):
         self.app = QApplication(sys.argv)
         self.app.setApplicationName(name_program)
         self.app.setApplicationVersion("1.0")
-        path_icon = os.path.join('img', "icon.png")
+        path_icon = os.path.join(path_program, 'img', "icon.png")
         self.app.setWindowIcon(QIcon(path_icon))
         
         self.app.setStyle('Fusion')
@@ -167,16 +172,8 @@ class MainView(QMainWindow):
         
         self.spacer4 = QWidget()
         self.spacer4.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        '''
-        self.spacer5 = QWidget()
-        self.spacer5.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+     
 
-        self.spacer6 = QWidget()
-        self.spacer6.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        self.spacer7 = QWidget()
-        self.spacer7.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        '''
         self.btnpreferences = QPushButton(self)
         self.btnpreferences.setText("preferences")
 
