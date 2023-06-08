@@ -15,23 +15,35 @@ from views import PreferencesView, WhisperView
 
 
 class MainView(QMainWindow):
+
+    def file_to_str(self, file_path):
+        with open(file_path, 'r') as f:
+            return f.read()
+        
+
     def __init__(self, name_program, path_program, controller, player_user_preferences):
         
         self.controller = controller # used in close_event()
 
         dir_css_name = "styles"
         
-        loadbar_css = os.path.join(path_program, dir_css_name, "loadbar_style.css") 
+        css_paths = {
+            "loadbar" : os.path.join(path_program, dir_css_name, "loadbar_style.css"),
+            "sliderbar" : os.path.join(path_program, dir_css_name, "speed_slider.css"),
+            "play" : os.path.join(path_program, dir_css_name, "btnplaystop_play_style.css"),
+            "stop" : os.path.join(path_program, dir_css_name, "btnplaystop_stop_style.css"),
+            "back" : os.path.join(path_program, dir_css_name, "btnback_style.css"),
+            "forward" : os.path.join(path_program, dir_css_name, "btnforward_style.css")
+        }
        
-        sliderbar_css = os.path.join(path_program, dir_css_name, "speed_slider.css")
-
-        print(loadbar_css)
         
-        with open(loadbar_css, 'r') as f:
-            self.loadbar_style = f.read()
-
-        with open(sliderbar_css, 'r') as f:
-            self.speedslider_style = f.read()
+        self.loadbar_style = self.file_to_str(css_paths["loadbar"])
+        self.speedslider_style = self.file_to_str(css_paths["sliderbar"])
+        self.play_style = self.file_to_str(css_paths["play"])
+        self.stop_style = self.file_to_str(css_paths["stop"])
+        self.back_style = self.file_to_str(css_paths["back"])
+        self.forward_style = self.file_to_str(css_paths["forward"])
+        
 
         #if user platform is windows and he want special dark mode..
         if sys.platform == "win32" and player_user_preferences["windows_dark_mode"]: # for Windows
@@ -99,21 +111,23 @@ class MainView(QMainWindow):
         self.tool_bar3.setAllowedAreas(Qt.BottomToolBarArea | Qt.TopToolBarArea)
         
         self.btnBack = QPushButton(self)
-        self.btnBack.setStyleSheet('QPushButton {background-color: silver; color: black;}')
+        self.btnBack.setStyleSheet(self.back_style)
+        self.btnBack.setFixedSize(70,28)  
         self.btnBack.setText("-{}".format(player_user_preferences["back_value"]))
         self.btnBack.setShortcut(player_user_preferences["back_shortkey"])
 
         
         self.btnPlayPause = QPushButton(self)
-        self.btnPlayPause.setStyleSheet('QPushButton {background-color: green; color: white;}')
-        self.btnPlayPause.setFixedSize(105,30)  
+        self.btnPlayPause.setStyleSheet(self.play_style)
+        self.btnPlayPause.setFixedSize(105,35)  
         self.btnPlayPause.setText("||")   
         self.btnPlayPause.setShortcut(player_user_preferences["playpause_shortkey"])  
         
         
 
         self.btnForward = QPushButton(self)
-        self.btnForward.setStyleSheet('QPushButton {background-color: silver; color: black;}')
+        self.btnForward.setStyleSheet( self.forward_style)
+        self.btnForward.setFixedSize(70,28)  
         self.btnForward.setText("+{}".format(player_user_preferences["forward_value"]))   
         self.btnForward.setShortcut(player_user_preferences["forward_shortkey"])  
         

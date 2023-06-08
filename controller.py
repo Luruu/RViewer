@@ -122,7 +122,7 @@ class Controller():
         self.w_player.is_paused = False
         self.window.btnPlayPause.setText("||")
         self.window.btnPlayPause.setShortcut(self.m_player.player_preferences["playpause_shortkey"])  
-        self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: #981c12; color: white;}')
+        self.window.btnPlayPause.setStyleSheet(self.window.stop_style)
         if self.sem.available() == 0:
             self.sem.release(1)
                       
@@ -131,7 +131,7 @@ class Controller():
             self.w_player.pause()
             self.w_player.is_paused = True
             self.window.btnPlayPause.setText(">")
-            self.window.btnPlayPause.setStyleSheet('QPushButton {background-color: green; color: white;}')
+            self.window.btnPlayPause.setStyleSheet(self.window.play_style)
             self.window.btnPlayPause.setShortcut(self.m_player.player_preferences["playpause_shortkey"])  
       
     def play_pause(self):
