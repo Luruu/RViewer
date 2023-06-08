@@ -12,8 +12,6 @@ import os
 from views import PreferencesView, WhisperView
 
 
-
-
 class MainView(QMainWindow):
 
     def file_to_str(self, file_path):
