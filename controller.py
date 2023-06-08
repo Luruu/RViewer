@@ -19,35 +19,13 @@ from PySide6.QtWidgets import *
 
 class Controller():
    
-    def get_original_path(self):
-        # path of main .py or .exe when converted with pyinstaller
-        if getattr(sys, 'frozen', False):
-            script_path = os.path.dirname(sys.executable)
-        else:
-            script_path = os.path.dirname(
-                os.path.abspath(sys.modules['__main__'].__file__)
-            )
-        return script_path
-
-    def get_MEI_path(self):
-        # path of your data in same folder of main .py or added using --add-data
-        if getattr(sys, 'frozen', False):
-            data_folder_path = sys._MEIPASS
-        else:
-            data_folder_path = os.path.dirname(
-                os.path.abspath(sys.modules['__main__'].__file__)
-            )
-        return data_folder_path
-
-   
-
 
     def __init__(self):
         
         self.program_name = "RV"
 
         self.program_path = self.get_original_path() # temp folder -> os.path.dirname(os.path.abspath(__file__))
-        
+        print(self.program_path )
         ''' source_path is for testing only
         source_path = ["test/test_sub.mkv", "test/test_without_subs.mp4", "test/input.mkv", "test/output.mkv", "test/B.mp3", "test/audio.mp3", "test/audio_short.wav",
                        "test/video2.mkv", "test/video.mp4", "test/sample.mp4", "test/1.mkv", "test/video_test.mp4"]
@@ -97,6 +75,28 @@ class Controller():
     
         sys.exit(self.window.app.exec())
     
+
+    def get_original_path(self):
+        # path of main .py or .exe when converted with pyinstaller
+        if getattr(sys, 'frozen', False):
+            script_path = os.path.dirname(sys.executable)
+        else:
+            script_path = os.path.dirname(
+                os.path.abspath(sys.modules['__main__'].__file__)
+            )
+        return script_path
+
+    def get_MEI_path(self):
+        # path of your data in same folder of main .py or added using --add-data
+        if getattr(sys, 'frozen', False):
+            data_folder_path = sys._MEIPASS
+        else:
+            data_folder_path = os.path.dirname(
+                os.path.abspath(sys.modules['__main__'].__file__)
+            )
+        return data_folder_path
+
+
     '''
     Maybe not useful
     def get_correct_path(self, relative_path):
@@ -258,6 +258,11 @@ class Controller():
         state_name = states[state]
         self.window.whisper_window.textedit.append(f"State changed: {state_name}")
 
+        if state_name == "Not running":
+            self.window.whisper_window.setEnabled(True)
+            self.window.setEnabled(True)
+            self.whisper = None
+
     def process_finished(self):
         self.window.whisper_window.setEnabled(True)
         self.window.setEnabled(True)
@@ -295,10 +300,9 @@ class Controller():
             python = os.path.join("env", "bin", "python")
          
         
-    
-        self.whisper.start(python, ["subtitle.py", self.m_video.name_video, sys.argv[1], self.window.whisper_window.get_language_selected(),self.window.whisper_window.combobox2.currentText()])
+        file_path = os.path.join(self.get_MEI_path(),"whispermodel.py")
+        self.whisper.start(python, [file_path, self.program_path , self.m_video.name_video, sys.argv[1], self.window.whisper_window.get_language_selected(),self.window.whisper_window.combobox2.currentText()])
             
-
             
 
     def whisper_view_close(self):

@@ -5,13 +5,15 @@ import time
 import os.path
 import datetime
 import sys
-import whisper 
+import whisper
 import torch
 class Whisper():
     
-    def __init__(self, name_video , path_video, lang_sub, model_selected):
+    def __init__(self, program_path, name_video, path_video, lang_sub, model_selected):
             self.name_video = name_video
             self.path_video = path_video
+            
+            self.program_path = program_path
 
             self.model = None
 
@@ -21,8 +23,6 @@ class Whisper():
             
     def run(self):
         
-
-        ''' imports are here because too heavy to import at startup'''
         print("starting Whisper..") 
         
         
@@ -40,7 +40,7 @@ class Whisper():
 
         print("{}: Subtitles created!".format(time.strftime("%H:%M:%S", time.localtime()))) 
 
-        srt_file_name = os.path.join('srt', "{}.srt".format(self.name_video))
+        srt_file_name = os.path.join(self.program_path,'srt', "{}.srt".format(self.name_video))
        
         self.create_srt(srt_file_name, result)
         print("{}: srt file Subtitles created!".format(time.strftime("%H:%M:%S", time.localtime()))) 
@@ -58,8 +58,9 @@ class Whisper():
         return str(datetime.timedelta(seconds=ss))
 
 
+
 if __name__ == '__main__':
     if len(sys.argv) > 0:
-        Whisper(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]).run()
+        Whisper(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5]).run()
     else:
         print("error: no arguments")

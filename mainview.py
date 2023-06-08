@@ -41,6 +41,7 @@ class MainView(QMainWindow):
         self.app.setApplicationName(name_program)
         self.app.setApplicationVersion("1.0")
         path_icon = os.path.join(path_program, 'img', "icon.png")
+   
         self.app.setWindowIcon(QIcon(path_icon))
         
         self.app.setStyle('Fusion')
