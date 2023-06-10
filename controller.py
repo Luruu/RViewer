@@ -24,16 +24,8 @@ class Controller():
         
         self.program_name = "RV"
 
-        self.program_path = self.get_original_path() # temp folder -> os.path.dirname(os.path.abspath(__file__))
-        print(self.program_path )
-        ''' source_path is for testing only
-        source_path = ["test/test_sub.mkv", "test/test_without_subs.mp4", "test/input.mkv", "test/output.mkv", "test/B.mp3", "test/audio.mp3", "test/audio_short.wav",
-                       "test/video2.mkv", "test/video.mp4", "test/sample.mp4", "test/1.mkv", "test/video_test.mp4"]
-       
-        
-        
-        sys.argv += [source_path[11]]
-        '''
+        self.program_path = self.get_original_path()
+        print(self.program_path)
 
         self.check_video_path()
 
@@ -95,18 +87,6 @@ class Controller():
                 os.path.abspath(sys.modules['__main__'].__file__)
             )
         return data_folder_path
-
-
-    '''
-    Maybe not useful
-    def get_correct_path(self, relative_path):
-        try:
-            base_path = sys._MEIPASS
-        except Exception:
-            base_path = os.path.abspath(".")
-
-        return os.path.join(base_path, relative_path)
-    '''
 
     def check_video_path(self):
         if len(sys.argv) > 1: # if argv has an input
@@ -176,9 +156,9 @@ class Controller():
             return False
         else:
             return True
+        
 
     def __check_show_subtitle_if_available_preference(self):
-        
         #check if video contains audiotracks
         if not self.__check_if_audiotrack_exist():
             return
