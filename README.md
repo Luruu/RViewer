@@ -44,6 +44,7 @@ This helped me to activate it: https://github.com/pytorch/pytorch/issues/30664#i
 
 ## Outputs
 <img align="center" src="img/mac_screen.png" width=780px> 
+<img align="center" src="img/mac_screen_nolist.png" width=780px> 
 <img align="left" src="img/mac_preferences.png" width=350px> <img align="right" src="img/mac_whisper.png" width=350px>
 
 <img align="left" src="img/window_screen_white.png" width=760px>  
