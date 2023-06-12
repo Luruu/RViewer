@@ -70,6 +70,8 @@ class MainView(QMainWindow):
         
         self.setWindowTitle(name_program)
         
+        self.set_frames()
+
         self.set_widgets(player_user_preferences)
 
         self.add_widgets()
@@ -80,20 +82,50 @@ class MainView(QMainWindow):
     def show_whisper_window(self):
         self.whisper_window.show()
 
+    def set_frames(self):
+        main_layout = QHBoxLayout()
+        main_layout.setContentsMargins(0,0,0,0)
+        main_layout.setSpacing(0)
+
+        self.videoframe = QFrame(self)
+        #self.videoframe.setContentsMargins(0,0,0,0)
+        
+        self.list_layout = QVBoxLayout()
+        self.list_layout.setContentsMargins(0,0,0,0)
+        self.list_layout.setSpacing(0)
+
+        self.listframe = QFrame()
+        self.listframe.setAutoFillBackground(True)
+        self.listframe.setMaximumWidth(200)
+        self.listframe.setLayout(self.list_layout)
+
+        self.addremove_layout = QHBoxLayout()
+        self.addremove_layout.setContentsMargins(0,0,0,0)
+        self.addremove_layout.setSpacing(0)
+
+        self.addremoveframe = QFrame()
+        self.addremoveframe.setAutoFillBackground(True)
+        self.addremoveframe.setMaximumWidth(200)
+        self.addremoveframe.setLayout(self.addremove_layout)
+
+
+        main_layout.addWidget(self.videoframe)
+        main_layout.addWidget(self.listframe)
+
+
+        central_widget = QWidget()
+        
+        central_widget.setLayout(main_layout)
+        central_widget.setAutoFillBackground(True)
+        self.setCentralWidget(central_widget)
+
+
     def set_widgets(self, player_user_preferences):
-        self.videoframe = QFrame()
-
-        # set videoframe color
-        self.palette = self.videoframe.palette()
-        self.palette.setColor(QPalette.Window, QColor(0, 0, 0))
-        self.videoframe.setPalette(self.palette)
-        self.videoframe.setAutoFillBackground(True)
-        self.setCentralWidget(self.videoframe)
-
+        
         self.labelposition = QLabel(self)
         self.labelposition.setText("00:00:00")
         self.labelposition.setAlignment(Qt.AlignCenter)
-        
+    
 
         self.tool_bar = QToolBar()
         self.tool_bar2 = QToolBar()
@@ -190,13 +222,24 @@ class MainView(QMainWindow):
         self.btnpreferences = QPushButton(self)
         self.btnpreferences.setText("preferences")
 
+        self.btnShowTimestamps = QPushButton(self)
+        self.btnShowTimestamps.setText("hide timestamps")
+
         self.btnSubtitle = QPushButton(self)
         self.btnSubtitle.setText("add subtitles")
        
+
+        self.btnAdd = QPushButton()
+        self.btnAdd.setText("add")
+
+        self.btnRemove = QPushButton()
+        self.btnRemove.setText("remove")
+
+        self.listwidget = QListWidget()
+    
         
 
     def add_widgets(self):
-        
 
         self.tool_bar.addWidget(self.spacer1)
         self.tool_bar.addWidget(self.btnBack)
@@ -213,21 +256,55 @@ class MainView(QMainWindow):
         self.tool_bar3.addWidget(self.speed_slider)
         self.tool_bar3.addWidget(self.label_speed) 
         self.tool_bar3.addWidget(self.btnSubtitle)
+        self.tool_bar3.addWidget(self.btnShowTimestamps)
         self.tool_bar3.addWidget(self.btnpreferences)
         self.tool_bar3.addWidget(self.spacer3)
         self.tool_bar3.addWidget(QLabel("volume"))
         self.tool_bar3.addWidget(self.volume_slider)     
-
         
-    
+        
+        self.list_layout.addWidget(self.listwidget)
+
+        self.list_layout.addWidget(self.addremoveframe)
+
+        self.addremove_layout.addWidget(self.btnAdd)
+        self.addremove_layout.addWidget(self.btnRemove)
+        
+
     def set_loadbar2orientation(self):
         if self.loadbar.orientation() == Qt.Horizontal:
             self.loadbar.setOrientation(Qt.Vertical)
         else:
             self.loadbar.setOrientation(Qt.Horizontal)
+
+    
             
     def closeEvent(self, event):
         self.controller.close_program(event, track_pos=self.speed_slider.value(), load_pos=self.loadbar.value())
+
+
+
+class AddItemDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("RV")
+
+        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.text1 = QLineEdit()
+
+        self.layout = QVBoxLayout()
+        message = QLabel("Insert Title timestamp")
+        self.layout.addWidget(message)
+        self.layout.addWidget(self.text1)
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
 
 
 class SliderClicker(QSlider):

@@ -5,7 +5,7 @@
 
 from views import PlayerView
 
-from mainview import MainView
+from mainview import MainView, AddItemDialog
 
 from model import PlayerModel, VideoModel
 
@@ -52,7 +52,10 @@ class Controller():
         
         self.w_player.parse_media()
         self.window.show() 
+
         self.m_video.get_videoinfo_byvideo(self.w_player)
+        self.m_video.set_namevideofile()
+        
         self.initialize_gui()
         
     
@@ -183,10 +186,30 @@ class Controller():
         else:
             self.buttonsub_operation = 2
             self.window.btnSubtitle.setText("add subtitles")
-        
+    
+    def load_list_timestamps(self):
+        self.m_video.load_videotimestamps()
+
+        for key, value in self.m_video.timestamps.items():
+            self.window.listwidget.addItem(key)
+
+            
+    def _check_show_timestamps(self):
+        if self.m_player.player_preferences["show_time_stamp"]:
+            self.window.btnShowTimestamps.setText("hide timestamps")
+            self.window.listframe.setVisible(True)
+        else:
+            self.window.btnShowTimestamps.setText("show timestamps")
+            self.window.listframe.setVisible(False)
+
 
     def initialize_gui(self): 
+
         self.m_video.load_videopreferences()
+    
+        self.load_list_timestamps()
+
+        self._check_show_timestamps()
 
         self.__check_track_video_preference()
         
@@ -296,7 +319,6 @@ class Controller():
             self.window.btnSubtitle.setText("hide subtitles")
     
 
-
     def set_subtitles_by_file(self, srt):
         return self.w_player.set_subtitle(srt) == 1
 
@@ -335,6 +357,42 @@ class Controller():
         self.w_player.set_time(self.window.loadbar.value())
         time.sleep(0.2)
         self.play()
+    
+    def update_time_to_timestamp(self):
+        time_ms = self.m_video.timestamps[self.window.listwidget.currentItem().text()]
+        self.w_player.set_time(time_ms)
+        time.sleep(0.2)
+        self.play()
+
+    def show_hide_timestamps(self):
+        if self.window.listframe.isVisible():
+            self.window.btnShowTimestamps.setText("show timestamps")
+            self.window.listframe.setVisible(False)
+        else:
+            self.window.btnShowTimestamps.setText("hide timestamps")
+            self.window.listframe.setVisible(True)
+
+    def addTimeStamp(self):
+        dlgAdd = AddItemDialog()
+        if dlgAdd.exec():
+            print("Success!")
+            input = dlgAdd.text1.text()
+            time_ms = self.w_player.get_time()
+            timestamp = self.m_video.convert_ms_to_hmmss(time_ms)
+            title = "[{}] {}".format(timestamp,input)
+            self.window.listwidget.addItem(title)
+            self.m_video.add_timestamp(title,time_ms)
+
+    def removeTimeStamp(self):
+        item_to_remove = self.window.listwidget.currentItem()
+        if item_to_remove == None:
+            return
+
+        title = self.window.listwidget.currentItem().text()
+        self.window.listwidget.takeItem(self.window.listwidget.currentRow())
+        self.m_video.delete_timestamp(title)
+
+        
 
     def set_view_connections(self):
         self.window.btnBack.clicked.connect(self.goback_and_update_gui)
@@ -342,7 +400,13 @@ class Controller():
         self.window.btnForward.clicked.connect(self.goforward_and_update_gui)
         self.window.btnpreferences.clicked.connect(self.window.show_preference_window)
         self.window.btnSubtitle.clicked.connect(self.handle_subtitles)
+        self.window.btnShowTimestamps.clicked.connect(self.show_hide_timestamps)
         self.window.speed_slider.valueChanged.connect(self.changeSpeedVideo)
+
+        self.window.listwidget.itemClicked.connect(self.update_time_to_timestamp)
+
+        self.window.btnAdd.clicked.connect(self.addTimeStamp)
+        self.window.btnRemove.clicked.connect(self.removeTimeStamp)
 
         self.window.loadbar.sliderPressed.connect(self.pause)
         self.window.loadbar.sliderReleased.connect(self.slider_released_behavior)
@@ -372,8 +436,13 @@ class Controller():
         
         self.m_video.save_video_preferences(track_pos=track_pos, load_pos=load_pos, vol= self.w_player.get_volume())
         geometry = self.window.geometry()
-        self.m_player.save_player_preferences(x=geometry.x(), y=geometry.y(), dim=geometry.width(), hei=geometry.height(), whisper_len=self.window.whisper_window.combobox1.currentText(), whisper_model=self.window.whisper_window.combobox2.currentText())
+        self.m_player.save_player_preferences(x=geometry.x(), y=geometry.y(), dim=geometry.width(), hei=geometry.height(), 
+                                              whisper_len=self.window.whisper_window.combobox1.currentText(), 
+                                              whisper_model=self.window.whisper_window.combobox2.currentText(),
+                                              time_stamp=self.window.listframe.isVisible())
         
+
+
 
 
 # to avoid freezes, I use this QThread as a timer

@@ -128,6 +128,7 @@ class PlayerView(QThread):
     
 
 
+
 class PreferencesView(QDialog):
     def __init__(self, controller):
         super(PreferencesView, self).__init__()
@@ -286,6 +287,10 @@ class PreferencesView(QDialog):
         self.setLayout(self.layoutt)
 
 
+    
+    
+    
+
 class WhisperView(QDialog):
     def __init__(self, controller):
         super(WhisperView, self).__init__()
@@ -330,9 +335,8 @@ class WhisperView(QDialog):
     def set_widgets(self):
         self.layoutt = QFormLayout()
 
-        self.label1 = QLabel("CREATE SUBTITLES WITH WHISPER")
+        self.label1 = QLabel("CREATE SUBTITLES WITH WHISPERX")
         self.label1.setAlignment(Qt.AlignCenter)
-        # self.label1.setStyleSheet("QLabel{font-size: 11pt;}")
         
     
         self.importbutton = QPushButton()

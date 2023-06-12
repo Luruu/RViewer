@@ -32,13 +32,12 @@ This helped me to activate it: https://github.com/pytorch/pytorch/issues/30664#i
 ## possible future updates
 1. handle more subtitles
 2. create a window for subtitles
-3. add css for more gui objects
-4. add code documentation
-5. handle playlists
-6. handle youtube videos
-7. Generate audio transcript from subtitles
-8. vocal commands
-9. Stream video
+3. add code documentation
+4. handle playlists
+5. handle youtube videos
+6. Generate audio transcript from subtitles
+7. vocal commands
+8. Stream video
 
 ## credits
 <a href="https://www.flaticon.com/free-icons/music-and-multimedia" title="music-and-multimedia icons">Program Icon created by Azland Studio - Flaticon</a>

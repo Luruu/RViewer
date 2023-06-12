@@ -8,9 +8,18 @@ import json
 import sys
 import os.path
 
+def _save_in_file(filename, dict):
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(dict, f)
+
 
 class VideoModel():
     def __init__(self, player_preferences, path_program):
+
+        self.timestamps = {}
+        self.file_timestamps = os.path.join(path_program, "timestamps.json") 
+
+
         self.default_video_preferences = {
             "track_value" : player_preferences["track_value"],
             "load_pos": 0,
@@ -23,39 +32,70 @@ class VideoModel():
         self.file_video_preferences = os.path.join(path_program, "preferences", "video_preferences.json") 
         self.name_video = "" # this is the name into json file
 
-        self.video_info = {} #Title, Artist, Duration, Rate, etc.
-        
+        self.video_info = {} # Title, Artist, Duration, Rate, etc.
 
-    def load_video_preferences_by_file(self, filename, videoname):
+    # define video name into json and srt
+    def set_namevideofile(self):
+        self.name_video = self.video_info["Title"] + str(self.video_info["Duration"])
+
+
+    def _load_by_file(self,filename,videoname): 
+        if not os.path.isfile(filename):
+            return False
+
         with open(filename, 'r') as z:
             json_file = json.load(z)
             if videoname in json_file:
-                self.video_preferences = json_file[videoname]
-                return True
-            else:
-                return False
+                return json_file[videoname]
+            else: # video is not in json file
+                return False 
     
 
-    def save_video_preferences_in_file(self, filename, dict):
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(dict, f)
+    def _load_video_preferences_by_file(self):
+        self.video_preferences = self._load_by_file(self.file_video_preferences,self.name_video)
+        return self.video_preferences != False
+    
+    def _load_timestamps_by_file(self):
+        self.timestamps = self._load_by_file(self.file_timestamps,self.name_video)
+        return self.timestamps != False
+    
+
+    def load_videotimestamps(self):
+        if not os.path.isfile(self.file_timestamps):
+            video_dict = {self.name_video: {}} # in {} i'll have a dict of titles and timestamps
+            _save_in_file(self.file_timestamps, video_dict)
+
+        video_timestamps_exist = self._load_timestamps_by_file()
+        if not video_timestamps_exist:
+            self.timestamps = {}
+    
+    def delete_timestamp(self,title):
+        self.timestamps.pop(title)
+        self.save_timestamps()
+
 
     def load_videopreferences(self):
-        # define video name into json and srt
-        self.name_video = self.video_info["Title"] + str(self.video_info["Duration"])
-        
         #if file does not exists I have to create it and to set default values for a single video
         if not os.path.isfile(self.file_video_preferences):
             video_dict = {self.name_video: {}}
             video_dict[self.name_video] = self.default_video_preferences
-            self.save_video_preferences_in_file(self.file_video_preferences, video_dict)
+            _save_in_file(self.file_video_preferences, video_dict)
 
-        # now file exists, so I can read user video preferences (and if not exist video preferences, into )
-        video_preferences_exist = self.load_video_preferences_by_file(self.file_video_preferences, self.name_video)
+        # now file exists, so I can read user video preferences (and if not exist video preferences, I use default video preferences )
+        video_preferences_exist = self._load_video_preferences_by_file()
         if not video_preferences_exist:
             self.video_preferences = self.default_video_preferences 
-       
-        
+
+
+    def add_timestamp(self,title,timestamp):
+        self.timestamps[title] = timestamp
+        self.save_timestamps()
+    
+    
+    def save_timestamps(self):
+        self._append_in_json(self.timestamps, self.file_timestamps)
+    
+
     def save_video_preferences(self,track_pos,load_pos, vol):
         self.video_preferences = {
             "track_value" : track_pos,
@@ -63,13 +103,16 @@ class VideoModel():
             "selected_sub_title": 1, # I have to change this value when I know if it is a number or an object.
             "volume_value" : vol # I have to change this value when I know range.
         }
+        self._append_in_json(self.video_preferences, self.file_video_preferences)
+    
+    def _append_in_json(self, subset, file_name): #add a subset (I mean a {"namevideo1": number1, "namevideo2": number2, etc. }) into a json
 
         # read all json file because I need all json to modify a single value of a key.
-        with open(self.file_video_preferences, 'r') as z:
+        with open(file_name, 'r') as z:
             self.file_json = json.load(z)
 
-        self.file_json[self.name_video] = self.video_preferences
-        self.save_video_preferences_in_file(self.file_video_preferences, self.file_json)
+        self.file_json[self.name_video] = subset
+        _save_in_file(file_name, self.file_json)
     
   
     def get_videoinfo_byvideo(self, w_player):
@@ -89,6 +132,10 @@ class VideoModel():
     
     def convert_ms_to_hmmss(self, ms):
         return str(datetime.timedelta(seconds=int(ms/1000)))
+    
+    def convert_hmmss_to_ms(self,time_str):
+        h, m, s = time_str.split(':')
+        return str((int(h) * 3600 + int(m) * 60 + int(s)) * 1000)
     
 
    
@@ -111,7 +158,8 @@ class PlayerModel():
             "x" : 0,
             "y": 0,
             "dim": 0,
-            "hei": 0
+            "hei": 0,
+            "show_time_stamp": True
         }
 
         self.player_preferences = {}
@@ -126,7 +174,7 @@ class PlayerModel():
         with open(self.file_player_preferences, 'r') as f: 
             self.player_preferences = json.load(f) #update player preferences values with player_preferences.json 
         
-    def save_player_preferences(self,back=None,forward=None,track_pos=None,loop=None,pick=None,save=None,show=None,x=None,y=None,dim=None,hei=None, back_short=None, plpau_short=None, forwd_short=None,darkmodewin=None, whisper_len=None, whisper_model=None):
+    def save_player_preferences(self,back=None,forward=None,track_pos=None,loop=None,pick=None,save=None,show=None,x=None,y=None,dim=None,hei=None, back_short=None, plpau_short=None, forwd_short=None,darkmodewin=None, whisper_len=None, whisper_model=None, time_stamp=None):
         if back is not None:
             self.player_preferences["back_value"] = back
         if forward is not None:
@@ -166,10 +214,11 @@ class PlayerModel():
         if whisper_model is not None:
             self.player_preferences["whisper_model"] = whisper_model
 
+        if time_stamp is not None:
+            self.player_preferences["show_time_stamp"] = time_stamp
+
         # note: all key-values are salved into file. i.e: if back is None, self.player_preferences["back_value"] value is saved into file. If it is not none, back value instead is saved into file!
-        self.save_preferences_in_file(self.file_player_preferences, self.player_preferences)
+        _save_in_file(self.file_player_preferences, self.player_preferences)
 
     
-    def save_preferences_in_file(self, filename, dict):
-        with open(filename, 'w') as f:
-            json.dump(dict, f)
+    
