@@ -96,12 +96,12 @@ class VideoModel():
         self._append_in_json(self.timestamps, self.file_timestamps)
     
 
-    def save_video_preferences(self,track_pos,load_pos, vol):
+    def save_video_preferences(self,track_pos,load_pos, vol, sel_sub):
         self.video_preferences = {
             "track_value" : track_pos,
             "load_pos": load_pos,
-            "selected_sub_title": 1, # I have to change this value when I know if it is a number or an object.
-            "volume_value" : vol # I have to change this value when I know range.
+            "selected_sub_title": sel_sub, 
+            "volume_value" : vol
         }
         self._append_in_json(self.video_preferences, self.file_video_preferences)
     

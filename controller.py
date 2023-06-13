@@ -67,7 +67,8 @@ class Controller():
         self.set_view_connections()
         self.thread.start()
         self.window.setEnabled(True)
-    
+
+
         sys.exit(self.window.app.exec())
     
 
@@ -161,6 +162,25 @@ class Controller():
             return True
         
 
+    def _load_subtitles_into_combobox(self):
+        list_subs_all = self.w_player.get_sub_descriptions()
+        list_subs_names = [sub[1].decode("utf-8") for sub in list_subs_all]
+    
+        self.window.whisper_window.combobox0.addItems(list_subs_names)
+    
+    def _select_subtitle_into_combobox(self):
+        sel_sub = self.m_video.video_preferences["selected_sub_title"]
+        self.window.whisper_window.combobox0.setCurrentText(sel_sub)
+    
+    def set_subtitle_by_combo(self):
+        sub_selected = self.window.whisper_window.combobox0.currentText().encode()
+        for sub in self.w_player.get_sub_descriptions():
+            if sub[1] == sub_selected:
+                self.w_player.set_sub(sub[0])
+            
+
+       # list_subs_all = self.w_player.get_sub_descriptions()
+
     def __check_show_subtitle_if_available_preference(self):
         #check if video contains audiotracks
         if not self.__check_if_audiotrack_exist():
@@ -172,20 +192,17 @@ class Controller():
 
         # if file contains subtitles
             if self.w_player.get_sub_count() >= 2: # note: 1 is -1 for no subtitles
+                self._select_subtitle_into_combobox()
                 self.show_subtitles()
             # if file does not contain subtitles but srt file exists 
             elif os.path.exists(str_path):
                 self.w_player.set_subtitle(str_path)
-                self.buttonsub_operation = 0
-                self.window.btnSubtitle.setText("hide subtitles")
             else:
                 print("no sutbtitles found")
 
-                self.buttonsub_operation = 2
+        else: #user does not want show subtitles
+            self.hide_subtitles()
 
-        else:
-            self.buttonsub_operation = 2
-            self.window.btnSubtitle.setText("add subtitles")
     
     def load_list_timestamps(self):
         self.m_video.load_videotimestamps()
@@ -217,29 +234,20 @@ class Controller():
         
         self.__check_volume_preference()
         
+        self._load_subtitles_into_combobox()
         self.__check_show_subtitle_if_available_preference()
        
         
 
     def hide_subtitles(self):
-        self.buttonsub_operation = 1
-        self.window.btnSubtitle.setText("show subtitles")
         self.w_player.set_sub(self.w_player.get_sub_descriptions()[0][0])
 
     def show_subtitles(self):
-        self.buttonsub_operation = 0
-        self.window.btnSubtitle.setText("hide subtitles")
-        self.w_player.set_sub(self.w_player.get_sub_descriptions()[1][0])
+        self.set_subtitle_by_combo()
 
-    def handle_subtitles(self):
-        if self.buttonsub_operation == 0: # hide subtitles
-            self.hide_subtitles()
-        elif self.buttonsub_operation == 1: # show subtitles
-            self.show_subtitles()
-        elif self.buttonsub_operation == 2:   # whisper
-            self.window.show_whisper_window()
-        else:
-            print("else handle_subtitle error!!")
+
+    def show_subtitle_form(self):
+       self.window.show_whisper_window()
 
     def handle_stderr(self):
         data = self.whisper.readAllStandardError()
@@ -264,13 +272,13 @@ class Controller():
         if state_name == "Not running":
             self.window.whisper_window.setEnabled(True)
             self.window.setEnabled(True)
+            self.process_finished() #if is not correctly finished, the condition "if os.path.exists(srt_file_name):" in process_finished() will be False.
             self.whisper = None
 
     def process_finished(self):
-        self.window.whisper_window.setEnabled(True)
-        self.window.setEnabled(True)
         
         srt_file_name = os.path.join('srt', "{}.srt".format(self.m_video.name_video))
+
         # if process is completed, it will have created the srt file.
         if os.path.exists(srt_file_name): 
             self.window.whisper_window.textedit.append("Process completed! :)")
@@ -281,7 +289,6 @@ class Controller():
         else: # if process is interrupted, it will not have created the srt file.
             self.window.whisper_window.textedit.append("Process interrupted! :(")
 
-        self.whisper = None
 
 
     def do_subtitles(self):
@@ -305,18 +312,13 @@ class Controller():
         
         file_path = os.path.join(self.get_MEI_path(),"whispermodel.py")
         self.whisper.start(python, [file_path, self.program_path , self.m_video.name_video, sys.argv[1], self.window.whisper_window.get_language_selected(),self.window.whisper_window.combobox2.currentText()])
-            
+        #self.whisper.waitForFinished()
             
 
     def whisper_view_close(self):
         if self.whisper is not None:
             self.whisper.close()
-
         self.window.setEnabled(True)
-
-        if self.w_player.get_sub_count() > 0:
-            self.buttonsub_operation = 0
-            self.window.btnSubtitle.setText("hide subtitles")
     
 
     def set_subtitles_by_file(self, srt):
@@ -375,7 +377,6 @@ class Controller():
     def addTimeStamp(self):
         dlgAdd = AddItemDialog()
         if dlgAdd.exec():
-            print("Success!")
             input = dlgAdd.text1.text()
             time_ms = self.w_player.get_time()
             timestamp = self.m_video.convert_ms_to_hmmss(time_ms)
@@ -399,7 +400,7 @@ class Controller():
         self.window.btnPlayPause.clicked.connect(self.play_pause)
         self.window.btnForward.clicked.connect(self.goforward_and_update_gui)
         self.window.btnpreferences.clicked.connect(self.window.show_preference_window)
-        self.window.btnSubtitle.clicked.connect(self.handle_subtitles)
+        self.window.btnSubtitle.clicked.connect(self.show_subtitle_form)
         self.window.btnShowTimestamps.clicked.connect(self.show_hide_timestamps)
         self.window.speed_slider.valueChanged.connect(self.changeSpeedVideo)
 
@@ -416,6 +417,7 @@ class Controller():
         self.window.tool_bar2.orientationChanged.connect(self.window.set_loadbar2orientation)
 
         self.window.whisper_window.createbutton.clicked.connect(self.do_subtitles)
+        self.window.whisper_window.combobox0.currentTextChanged.connect(self.set_subtitle_by_combo)
 
     def anchorVLCtoWindow(self, player, id):
         if sys.platform.startswith('linux'): # for Linux using the X Server
@@ -434,7 +436,7 @@ class Controller():
         self.window.whisper_window.close()
         self.thread.terminate()
         
-        self.m_video.save_video_preferences(track_pos=track_pos, load_pos=load_pos, vol= self.w_player.get_volume())
+        self.m_video.save_video_preferences(track_pos=track_pos, load_pos=load_pos, vol= self.w_player.get_volume(), sel_sub=self.window.whisper_window.combobox0.currentText())
         geometry = self.window.geometry()
         self.m_player.save_player_preferences(x=geometry.x(), y=geometry.y(), dim=geometry.width(), hei=geometry.height(), 
                                               whisper_len=self.window.whisper_window.combobox1.currentText(), 

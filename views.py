@@ -302,12 +302,17 @@ class WhisperView(QDialog):
         self.models = ["tiny", "base", "small"]
         self.languages = { "en": "english", "zh": "chinese", "de": "german", "es": "spanish", "ru": "russian", "ko": "korean", "fr": "french", "ja": "japanese", "pt": "portuguese", "tr": "turkish", "pl": "polish", "ca": "catalan", "nl": "dutch", "ar": "arabic", "sv": "swedish", "it": "italian", "id": "indonesian", "hi": "hindi", "fi": "finnish", "vi": "vietnamese", "he": "hebrew", "uk": "ukrainian", "el": "greek", "ms": "malay", "cs": "czech", "ro": "romanian", "da": "danish", "hu": "hungarian", "ta": "tamil", "no": "norwegian", "th": "thai", "ur": "urdu", "hr": "croatian", "bg": "bulgarian", "lt": "lithuanian", "la": "latin", "mi": "maori", "ml": "malayalam", "cy": "welsh", "sk": "slovak", "te": "telugu", "fa": "persian", "lv": "latvian", "bn": "bengali", "sr": "serbian", "az": "azerbaijani", "sl": "slovenian", "kn": "kannada", "et": "estonian", "mk": "macedonian", "br": "breton", "eu": "basque", "is": "icelandic", "hy": "armenian", "ne": "nepali", "mn": "mongolian", "bs": "bosnian", "kk": "kazakh", "sq": "albanian", "sw": "swahili", "gl": "galician", "mr": "marathi", "pa": "punjabi", "si": "sinhala", "km": "khmer", "sn": "shona", "yo": "yoruba", "so": "somali", "af": "afrikaans", "oc": "occitan", "ka": "georgian", "be": "belarusian", "tg": "tajik", "sd": "sindhi", "gu": "gujarati", "am": "amharic", "yi": "yiddish", "lo": "lao", "uz": "uzbek", "fo": "faroese", "ht": "haitian creole", "ps": "pashto", "tk": "turkmen", "nn": "nynorsk", "mt": "maltese", "sa": "sanskrit", "lb": "luxembourgish", "my": "myanmar", "bo": "tibetan", "tl": "tagalog", "mg": "malagasy", "as": "assamese", "tt": "tatar", "haw": "hawaiian", "ln": "lingala", "ha": "hausa", "ba": "bashkir", "jw": "javanese", "su": "sundanese",} 
         
-        self.setFixedSize(255, 300)
+        self.setFixedSize(255, 320)
         self.set_widgets()
         self.add_widgets()
 
     def closeEvent(self, event):
         self.controller.whisper_view_close()
+
+    def import_file_and_lock_combobox0(self):
+        self.import_file()
+        self.combobox0.setEnabled(False)
+
 
     def import_file(self):
         dlg = QFileDialog()
@@ -318,14 +323,16 @@ class WhisperView(QDialog):
         if dlg.exec_():
             filenames = dlg.selectedFiles()
             new_name = os.path.join('srt', "{}.srt".format(self.name_video)) 
-            shutil.copyfile(filenames[0],new_name)
+
+            try:
+                shutil.copyfile(filenames[0],new_name)
+            except shutil.SameFileError:
+                pass
+
+            
             
             res = self.controller.w_player.set_subtitle(new_name)
-            if  res == 1:
-                print("subtitles added correctly")
-                self.controller.buttonsub_operation = 0
-                self.controller.window.btnSubtitle.setText("hide subtitles")
-            else:
+            if  res != 1:
                 print("error {}: cannot add subtitles".format(res))
             
 
@@ -335,13 +342,17 @@ class WhisperView(QDialog):
     def set_widgets(self):
         self.layoutt = QFormLayout()
 
+        self.label0 = QLabel("Select Subtitle")
+
+        self.combobox0 = QComboBox()
+
         self.label1 = QLabel("CREATE SUBTITLES WITH WHISPERX")
         self.label1.setAlignment(Qt.AlignCenter)
         
     
         self.importbutton = QPushButton()
         self.importbutton.setText("Import subtitles from existing file")
-        self.importbutton.clicked.connect(self.import_file)
+        self.importbutton.clicked.connect(self.import_file_and_lock_combobox0)
 
         
         self.combobox1 = QComboBox()
@@ -361,7 +372,9 @@ class WhisperView(QDialog):
         
     def add_widgets(self):
         self.layoutt.setSpacing(10)
+        
         self.layoutt.addRow(self.importbutton)
+        self.layoutt.addRow(self.label0,self.combobox0)
         self.layoutt.addRow(QLabel(""))
         self.layoutt.addRow(self.label1)
         self.layoutt.addRow(QLabel("select Audio Language:"), self.combobox1)

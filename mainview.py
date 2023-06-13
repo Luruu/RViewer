@@ -226,12 +226,12 @@ class MainView(QMainWindow):
         self.btnShowTimestamps.setText("hide timestamps")
 
         self.btnSubtitle = QPushButton(self)
-        self.btnSubtitle.setText("add subtitles")
+        self.btnSubtitle.setText("subtitles")
        
 
         self.btnAdd = QPushButton()
         self.btnAdd.setText("add")
-
+        
         self.btnRemove = QPushButton()
         self.btnRemove.setText("remove")
 
