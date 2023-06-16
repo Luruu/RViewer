@@ -1,0 +1,1 @@
+--nofreetype-bold --freetype-rel-fontsize=15 --freetype-color=16777215 --freetype-shadow-opacity=255 --freetype-shadow-color=0  --freetype-background-color=16711935 --freetype-background-opacity=1 --freetype-outline-color=0 

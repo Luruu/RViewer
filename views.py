@@ -19,17 +19,24 @@ class PlayerView(QThread):
         self.vlc_player = None
         self.media = None
         self.controller = controller
+        self.name_file_arg = "vlc_args.txt"
+        self.file_arg_path = os.path.join(self.controller.program_path,'preferences', "{}".format(self.name_file_arg)) 
 
     def run(self):
         self.video_path = sys.argv[1]
-        self.vlc_istance = vlc.Instance("--verbose -1")
+        args = self.load_args_by_file()
+        self.vlc_istance = vlc.Instance(args)  # "--verbose -1"
         self.vlc_player = self.vlc_istance.media_player_new()
         self.media = self.vlc_istance.media_new(sys.argv[1])
         self.vlc_player.set_media(self.media)       
         self.is_paused = False
         self.controller.sem_player.release(1)
-        
     
+    def load_args_by_file(self):
+        with open(self.file_arg_path, 'r') as file:
+            return file.read()
+        
+
     def get_media(self):
         return self.media
 
@@ -322,7 +329,7 @@ class WhisperView(QDialog):
 		
         if dlg.exec_():
             filenames = dlg.selectedFiles()
-            new_name = os.path.join('srt', "{}.srt".format(self.name_video)) 
+            new_name = os.path.join(self.controller.program_path,'srt', "{}.srt".format(self.name_video)) 
 
             try:
                 shutil.copyfile(filenames[0],new_name)

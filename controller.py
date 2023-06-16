@@ -188,7 +188,7 @@ class Controller():
         
         # if user want show subtitles
         if self.m_player.player_preferences["show_subtitle_if_available"]:
-            str_path = os.path.join('srt', "{}.srt".format(self.m_video.name_video)) 
+            str_path = os.path.join(self.program_path, 'srt', "{}.srt".format(self.m_video.name_video)) 
 
         # if file contains subtitles
             if self.w_player.get_sub_count() >= 2: # note: 1 is -1 for no subtitles
