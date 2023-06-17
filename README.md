@@ -28,6 +28,7 @@ https://github.com/Luruu/RViewer/assets/31493347/c1a90980-2d77-4563-afaa-652628b
     - Windows: `py -m venv env` and `.\env\Scripts\activate`
 4. Install libraries: `pip install pyside6 python-vlc git+https://github.com/m-bain/whisperx.git`
 
+note: you must have the VLC program installed to be able to view the videos (and open RViewer) and the ffmpeg program to be able to use whisper.
 
 ## tips
 - (Subtitle): use CUDA if you have a NVIDIA GPU: it will be faster. Check if torch.cuda is available with: `test_torch.py`.
