@@ -25,13 +25,14 @@ class Controller():
         self.program_name = "RV"
 
         self.program_path = self.get_original_path()
-        print(self.program_path)
 
         self.check_video_path()
 
         self.sem_player = QSemaphore(0)
         self.w_player = PlayerView(self)
         self.w_player.start()
+        
+
         self.sem_player.acquire(1)
         self.m_player = PlayerModel(self.program_path)
         self.window = MainView(self.program_name, self.program_path, self, self.m_player.player_preferences)
@@ -47,7 +48,10 @@ class Controller():
         self.m_video = VideoModel(self.m_player.player_preferences,self.program_path)
         
 
+
         self.thread = ThreadTimer(self)
+
+        
 
         
         self.w_player.parse_media()
@@ -56,6 +60,8 @@ class Controller():
         self.m_video.get_videoinfo_byvideo(self.w_player)
         self.m_video.set_namevideofile()
         
+        
+
         self.initialize_gui()
         
     
@@ -162,47 +168,74 @@ class Controller():
             return True
         
 
-    def _load_subtitles_into_combobox(self):
+    def load_subtitles_into_combobox(self):
+        self.window.whisper_window.combobox0.clear()
+
         list_subs_all = self.w_player.get_sub_descriptions()
         list_subs_names = [sub[1].decode("utf-8") for sub in list_subs_all]
-    
+
         self.window.whisper_window.combobox0.addItems(list_subs_names)
     
-    def _select_subtitle_into_combobox(self):
-        sel_sub = self.m_video.video_preferences["selected_sub_title"]
-        self.window.whisper_window.combobox0.setCurrentText(sel_sub)
+    def select_subtitle_into_combobox(self,sel_to_sub):
+        self.window.whisper_window.combobox0.setCurrentText(sel_to_sub)
     
     def set_subtitle_by_combo(self):
-        sub_selected = self.window.whisper_window.combobox0.currentText().encode()
+        sub_selected = self.window.whisper_window.combobox0.currentText()
+        sub = self.find_sub_in_player(sub_selected)
+        if sub != None:
+            self.w_player.set_sub(sub[0])
+        else:
+            print("[INFO]: cannot set_subtitle_by_combo (note: this may appear initially due to the initialization of combobox)")
+    
+    def find_sub_in_player(self,sub_to_find):
         for sub in self.w_player.get_sub_descriptions():
-            if sub[1] == sub_selected:
-                self.w_player.set_sub(sub[0])
-            
+            if sub[1].decode("utf-8") == sub_to_find:
+                return sub
+        return None
+    
+    def find_sub_name_in_player_by_int(self,int):
+        for sub in self.w_player.get_sub_descriptions():
+            if sub[0] == int:
+                return sub[1].decode("utf-8")
+        return None
+                
 
-       # list_subs_all = self.w_player.get_sub_descriptions()
+    def set_subtitle_and_load_into_combobox(self):
+        path_str = os.path.join(self.program_path, 'srt', "{}.srt".format(self.m_video.name_video)) 
+        if os.path.exists(path_str):
+            self.w_player.set_subtitle(path_str)
+            time.sleep(1.2) # w_player needs time to load path_str into video
+            self.load_subtitles_into_combobox()
+            self.window.whisper_window.combobox0.setCurrentIndex( self.window.whisper_window.combobox0.count()-1) # last index is the new file subtitle
 
     def __check_show_subtitle_if_available_preference(self):
         #check if video contains audiotracks
         if not self.__check_if_audiotrack_exist():
             return
         
-        # if user want show subtitles
-        if self.m_player.player_preferences["show_subtitle_if_available"]:
-            str_path = os.path.join(self.program_path, 'srt', "{}.srt".format(self.m_video.name_video)) 
+        path_str = os.path.join(self.program_path, 'srt', "{}.srt".format(self.m_video.name_video)) 
+        if os.path.exists(path_str):
+            self.w_player.set_subtitle(path_str)
 
-        # if file contains subtitles
-            if self.w_player.get_sub_count() >= 2: # note: 1 is -1 for no subtitles
-                self._select_subtitle_into_combobox()
-                self.show_subtitles()
-            # if file does not contain subtitles but srt file exists 
-            elif os.path.exists(str_path):
-                self.w_player.set_subtitle(str_path)
-            else:
-                print("no sutbtitles found")
 
-        else: #user does not want show subtitles
-            self.hide_subtitles()
-
+        if self.w_player.get_sub_count() >= 2: # note: first value is -1 that means no subtitles [Note: path_str will increase sub_counter after this moment!]
+            if self.m_player.player_preferences["show_subtitle_if_available"]: # if user want show subtitles
+                sub_selected = self.m_video.video_preferences["selected_sub_title"]
+                sub = self.find_sub_in_player(sub_selected)
+                if sub != None:
+                    self.w_player.set_sub(sub[0])
+                else:
+                    print("unexpected error: check!")
+            else: #user does not want show subtitles, so if file contains subtitle, program select the first element "disable".
+                self.w_player.hide_subtitle()
+        
+        else: 
+            print("no subtitles found inside video file")
+        
+        self.thread_sub = ThreadWaitForSubs(self)
+        if sys.platform == "darwin":
+            self.thread_sub.check_hide_sub.connect(self.check_hide_sub)
+        self.thread_sub.start()
     
     def load_list_timestamps(self):
         self.m_video.load_videotimestamps()
@@ -212,6 +245,7 @@ class Controller():
 
             
     def _check_show_timestamps(self):
+        
         if self.m_player.player_preferences["show_time_stamp"]:
             self.window.btnShowTimestamps.setText("hide timestamps")
             self.window.listframe.setVisible(True)
@@ -234,20 +268,21 @@ class Controller():
         
         self.__check_volume_preference()
         
-        self._load_subtitles_into_combobox()
+        self.load_subtitles_into_combobox()
         self.__check_show_subtitle_if_available_preference()
        
         
 
-    def hide_subtitles(self):
-        self.w_player.set_sub(self.w_player.get_sub_descriptions()[0][0])
-
-    def show_subtitles(self):
-        self.set_subtitle_by_combo()
-
-
     def show_subtitle_form(self):
-       self.window.show_whisper_window()
+        actual_sub = self.w_player.get_sub()
+
+        if self.window.whisper_window.isHidden():
+            self.window.show_whisper_window()
+            self.load_subtitles_into_combobox()
+            
+            self.select_subtitle_into_combobox(self.find_sub_name_in_player_by_int(actual_sub))
+        else: 
+            self.window.whisper_window.activateWindow()
 
     def handle_stderr(self):
         data = self.whisper.readAllStandardError()
@@ -276,16 +311,11 @@ class Controller():
             self.whisper = None
 
     def process_finished(self):
-        
-        srt_file_name = os.path.join('srt', "{}.srt".format(self.m_video.name_video))
-
         # if process is completed, it will have created the srt file.
+        srt_file_name = os.path.join('srt', "{}.srt".format(self.m_video.name_video))
         if os.path.exists(srt_file_name): 
             self.window.whisper_window.textedit.append("Process completed! :)")
-            if self.set_subtitles_by_file(srt_file_name):
-                self.window.whisper_window.textedit.append("{}: srt file Subtitles have been set up correctly!".format(time.strftime("%H:%M:%S", time.localtime()))) 
-            else:
-                self.window.whisper_window.textedit.append("{}: error! cannot create srt file Subtitles.".format(time.strftime("%H:%M:%S", time.localtime())))
+            self.set_subtitle_and_load_into_combobox()
         else: # if process is interrupted, it will not have created the srt file.
             self.window.whisper_window.textedit.append("Process interrupted! :(")
 
@@ -312,7 +342,6 @@ class Controller():
         
         file_path = os.path.join(self.get_MEI_path(),"whispermodel.py")
         self.whisper.start(python, [file_path, self.program_path , self.m_video.name_video, sys.argv[1], self.window.whisper_window.get_language_selected(),self.window.whisper_window.combobox2.currentText()])
-        #self.whisper.waitForFinished()
             
 
     def whisper_view_close(self):
@@ -436,16 +465,41 @@ class Controller():
         self.window.whisper_window.close()
         self.thread.terminate()
         
-        self.m_video.save_video_preferences(track_pos=track_pos, load_pos=load_pos, vol= self.w_player.get_volume(), sel_sub=self.window.whisper_window.combobox0.currentText())
+
+        combo_text = self.window.whisper_window.combobox0.currentText()
+        if combo_text == '':
+            sel_to_save = self.m_video.video_preferences["selected_sub_title"]
+        else:
+            sel_to_save = combo_text
+        
+        self.m_video.save_video_preferences(track_pos=track_pos, load_pos=load_pos, vol= self.w_player.get_volume(), sel_sub=sel_to_save)
         geometry = self.window.geometry()
         self.m_player.save_player_preferences(x=geometry.x(), y=geometry.y(), dim=geometry.width(), hei=geometry.height(), 
                                               whisper_len=self.window.whisper_window.combobox1.currentText(), 
                                               whisper_model=self.window.whisper_window.combobox2.currentText(),
                                               time_stamp=self.window.listframe.isVisible())
         
+        self.w_player.vlc_istance.release()
+        
+
+    def check_hide_sub(self):
+        if self.m_video.video_preferences["selected_sub_title"] == 'Disable' or self.m_video.video_preferences["selected_sub_title"] == '':
+            self.w_player.hide_subtitle()
+
+#this thread is used to check if hide subtitle (this can be done only after tot ms))
+class ThreadWaitForSubs(QThread):
+    check_hide_sub = Signal()
+    def __init__(self,controller):
+        QThread.__init__(self)
+        self.controller = controller
 
 
-
+    def run(self):
+        QThread.sleep(1.2)
+        if sys.platform == "darwin":
+            self.check_hide_sub.emit() 
+        else:
+            self.controller.check_hide_sub()
 
 # to avoid freezes, I use this QThread as a timer
 class ThreadTimer(QThread):
@@ -456,11 +510,8 @@ class ThreadTimer(QThread):
         
     def run(self):
         while not self.isInterruptionRequested():
-            # print(self.controller.sem.available())  
             if self.controller.sem.available() == 0 and self.controller.w_player.is_paused:  
-                # print("lock")  
                 self.controller.sem.acquire(1)
-                # print("unlock")  
             QThread.sleep(1)
                 
             # MacOS has problem if a external thread updates UI objects

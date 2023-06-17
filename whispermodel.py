@@ -56,7 +56,7 @@ class Whisper():
         
         self.create_srt(srt_file_name, result)
         print("{}: srt file Subtitles created correctly!".format(time.strftime("%H:%M:%S", time.localtime()))) 
-        #print("Please, reopen the program to view the subtitles")   
+       
 
     def create_srt(self,srt_file_name, result):
         self.str_out = ""

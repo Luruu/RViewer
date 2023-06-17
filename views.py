@@ -2,6 +2,7 @@
     view
 '''
 
+import time
 from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
@@ -35,7 +36,8 @@ class PlayerView(QThread):
     def load_args_by_file(self):
         with open(self.file_arg_path, 'r') as file:
             return file.read()
-        
+    
+    
 
     def get_media(self):
         return self.media
@@ -116,6 +118,8 @@ class PlayerView(QThread):
     def set_subtitle(self, subtitle_path):
         return self.vlc_player.video_set_subtitle_file(subtitle_path)
     
+    def hide_subtitle(self):
+        self.set_sub(self.get_sub_descriptions()[0][0]) 
 
     def get_audio_count(self):
         return self.vlc_player.audio_get_track_count()
@@ -313,13 +317,15 @@ class WhisperView(QDialog):
         self.set_widgets()
         self.add_widgets()
 
+    
+
     def closeEvent(self, event):
         self.controller.whisper_view_close()
 
-    def import_file_and_lock_combobox0(self):
+    def import_and_load_subs(self):
         self.import_file()
-        self.combobox0.setEnabled(False)
-
+        self.controller.set_subtitle_and_load_into_combobox()
+        
 
     def import_file(self):
         dlg = QFileDialog()
@@ -335,12 +341,7 @@ class WhisperView(QDialog):
                 shutil.copyfile(filenames[0],new_name)
             except shutil.SameFileError:
                 pass
-
-            
-            
-            res = self.controller.w_player.set_subtitle(new_name)
-            if  res != 1:
-                print("error {}: cannot add subtitles".format(res))
+        
             
 
     def get_language_selected(self):
@@ -359,7 +360,7 @@ class WhisperView(QDialog):
     
         self.importbutton = QPushButton()
         self.importbutton.setText("Import subtitles from existing file")
-        self.importbutton.clicked.connect(self.import_file_and_lock_combobox0)
+        self.importbutton.clicked.connect(self.import_and_load_subs)
 
         
         self.combobox1 = QComboBox()
