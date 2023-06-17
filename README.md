@@ -21,25 +21,30 @@ https://github.com/Luruu/RViewer/assets/31493347/c1a90980-2d77-4563-afaa-652628b
 - at least 1GB VRAM for OpenAI Tiny model, 3GB VRAM for Small model
 
 ## setup
-**to-do**
+1. Open a terminal and clone the repo: `gh repo clone Luruu/RViewer` (or download it manually)
+2. Move to RViewer folder: `cd RViewer`
+3. Create and activate a virtual environment: 
+    - Linux/MacOS: `python3 -m venv env` and `source env/bin/activate`
+    - Windows: `py -m venv env` and `.\env\Scripts\activate`
+4. Install libraries: `pip install pyside6 python-vlc git+https://github.com/m-bain/whisperx.git`
+
 
 ## tips
 - (Subtitle): use CUDA if you have a NVIDIA GPU: it will be faster. Check if torch.cuda is available with: `test_torch.py`.
 This helped me to activate it: https://github.com/pytorch/pytorch/issues/30664#issuecomment-757431613
 - change content of CSS files if you want to change object styles
+- change `vlc_args.txt` in preferences folder if you want to change the behavior of vlc (for example, to change subtitle font, size and so on)
 
 ## solutions
 - [MacOS]: if you get error `SSL: CERTIFICATE_VERIFY_FAILED` try to install `certifi` or upgrade it.
 
 ## possible future updates
-1. handle more subtitles
-2. create a window for subtitles
-3. add code documentation
-4. handle playlists
-5. handle youtube videos
-6. Generate audio transcript from subtitles
-7. vocal commands
-8. Stream video
+1. add code documentation
+2. handle playlists
+3. handle youtube videos
+4. Generate audio transcript from subtitles
+5. vocal commands
+6. Stream video
 
 ## credits
 <a href="https://www.flaticon.com/free-icons/music-and-multimedia" title="music-and-multimedia icons">Program Icon created by Azland Studio - Flaticon</a>
